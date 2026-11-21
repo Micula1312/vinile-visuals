@@ -11,9 +11,9 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  const t=wrap(phase*(params.speed||1),1), a=TAU*t, unit=h, orange=P.orange,pink=P.pink,red=P.red,ivory=P.ivory,black=P.black;
  c.save();c.beginPath();c.rect(0,0,w,h);c.clip();rect(c,0,0,w,h,bg);
  switch(v){
- // 01: monumental sun, traversing vertically while a second horizon opens.
+ // 01: a solar arc from left to right; the return path stays below the horizon.
  case 0:{
-  const x=w*.5,y=h*(.52+.67*Math.cos(a)),r=h*.54*s;
+  const x=w*(.5-.62*Math.cos(a)),y=h*(1.35-1.1*Math.sin(a)),r=h*.54*s;
   disc(c,x,y,r,fg);rect(c,0,h*.72,w,h*.28,black);
   for(let i=0;i<8;i++)rect(c,0,h*(.76+i*.031),w,h*.009,i%2?red:orange);
   break;
@@ -25,7 +25,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    const x=i*step+shift,y=h*(.5+.09*Math.sin(i*1.4)),r=h*(i%3===0?.36:.29)*s;
    bandSun(c,x,y,r,i%3===0?pink:fg,bg);
   }
-  rect(c,0,h*.85,w,h*.018,red);break;
+  break;
  }
  // 03: repeated suns emerge from a single location and dissolve into a grid.
  case 2:{
