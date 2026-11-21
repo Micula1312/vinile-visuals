@@ -4,7 +4,7 @@ import { renderSunset } from './sunset-motion.js';
 import { renderOptical } from './optical-motion.js';
 const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#EE69A7',violet:'#A58AFF',blue:'#235BFF',grey:'#A3A0A0'};
 const families=[['sunset','SUNSET STUDIES','Golden-hour discs, horizons, optical afterglow'],['night','NIGHT SHIFT','Electric-blue nocturnal signs and constellations'],['body','BODY FRAGMENTS','Violet soul silhouettes and serial repetitions'],['type','AFTER HOURS','Electric-blue editorial kinetic typography'],['liquid','LIQUID SIGNAL','Violet fluid waves and transformations'],['optical','OPTICAL STUDIES','Hydra-inspired blurred light and interference']];
-const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.orange,P.ivory],[P.black,P.blue],[P.black,P.violet],[P.black,P.blue],[P.black,P.violet],[P.black,P.violet]][fi]})));
+const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.black,P.ivory],[P.black,P.blue],[P.black,P.violet],[P.black,P.blue],[P.black,P.violet],[P.black,P.violet]][fi]})));
 const defaultHighlights={sunset:P.pink,night:P.blue,body:P.violet,type:P.blue,liquid:P.violet,optical:P.violet};
 const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
