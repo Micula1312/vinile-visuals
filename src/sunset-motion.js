@@ -13,7 +13,10 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
  case 0:{
-  const x=w*(.5-.62*Math.cos(a)),y=h*(1.35-1.1*Math.sin(a)),r=h*.54*s;
+  const r=h*.54*s;
+  // One slow crossing per full loop. The sun starts and ends fully outside the frame.
+  const x=-r*1.15+(w+r*2.3)*t;
+  const y=h*(.9-.57*Math.sin(Math.PI*t));
   disc(c,x,y,r,fg);rect(c,0,h*.72,w,h*.28,black);
   for(let i=0;i<8;i++)rect(c,0,h*(.76+i*.031),w,h*.009,i%2?red:orange);
   break;
@@ -22,8 +25,25 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  case 1:{
   const step=h*.9,shift=t*step;
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
-   const x=i*step+shift,y=h*(.5+.09*Math.sin(i*1.4)),r=h*(i%3===0?.36:.29)*s;
+   const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.31:.26)*s;
    bandSun(c,x,y,r,i%3===0?pink:fg,bg);
+  }
+  // A flat, screenprinted sea: layered wave contours travel slowly in opposite directions.
+  // All offsets use whole-number cycles, so the 20-second loop closes seamlessly.
+  const seaTop=h*.69;
+  rect(c,0,seaTop,w,h-seaTop,black);
+  for(let row=0;row<6;row++){
+   const base=seaTop+h*(.025+row*.049);
+   const amplitude=h*(.009+row*.002);
+   const wavelength=h*(1.7+row*.38);
+   const direction=row%2===0?1:-1;
+   const ink=[fg,pink,orange,fg,pink,orange][row];
+   c.beginPath();
+   for(let x=0;x<=w+h*.03;x+=Math.max(3,h*.015)){
+    const y=base+amplitude*Math.sin(TAU*(x/wavelength+direction*t)+row*.8);
+    if(x===0)c.moveTo(x,y);else c.lineTo(x,y);
+   }
+   c.strokeStyle=ink;c.lineWidth=h*(row%3===0?.009:.006);c.stroke();
   }
   break;
  }
