@@ -30,7 +30,7 @@ const cos=(t,n=1,o=0)=>Math.cos(TAU*(t*n+o));
 function scene(){return {...SCENES[state.index],...state.custom[SCENES[state.index].id]};}
 function paint(ctx,w,h,t,s){
  const {background:bg,foreground:fg,accent:ac,variant:v,family:f}=s;
- const u=t*s.speed*state.energy; // all frequency changes remain periodic for default integer speed
+ const u=t + Math.sin(TAU*t)*0.13*(s.speed-1)*state.energy; // periodic time warp: u(0)=0, u(1)=1
  const x=w*.5,y=h*.5,unit=h*s.scale;
  ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
  ctx.save();
