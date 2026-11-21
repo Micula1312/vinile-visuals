@@ -4,7 +4,7 @@ import { renderSunset } from './sunset-motion.js';
 const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#EE69A7',violet:'#A58AFF',blue:'#235BFF',grey:'#A3A0A0'};
 const families=[['sunset','SUNSET STUDIES','Golden-hour discs, horizons, optical afterglow'],['night','NIGHT SHIFT','Electric-blue nocturnal signs and constellations'],['body','BODY FRAGMENTS','Violet soul silhouettes and serial repetitions'],['type','AFTER HOURS','Electric-blue editorial kinetic typography'],['liquid','LIQUID SIGNAL','Violet fluid waves and transformations']];
 const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.orange,P.ivory],[P.black,P.blue],[P.black,P.violet],[P.black,P.blue],[P.black,P.violet]][fi]})));
-const app=document.querySelector('#app');let selected=scenes[0],playing=true,frame=0,last=0,params={scale:1,speed:1,dither:0},resolution={w:2304,h:512},duration=20,fps=30,quality=16;
+const app=document.querySelector('#app');let selected=scenes[0],playing=true,frame=0,last=0,params={scale:1,speed:1,dither:0},resolution={w:2304,h:1024},duration=20,fps=30,quality=16;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const ellipse=(c,x,y,rx,ry,color)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);c.fillStyle=color;c.fill()};
 function render(c,w,h,phase,s=selected,p=params){const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
