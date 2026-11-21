@@ -116,23 +116,25 @@ export function renderSunset(c,w,h,phase,scene,params,P){
   }
   break;
  }
- // 08: independent traveling afterimages — each silhouette has its own orbit and tempo.
+ // 08: solar afterimage / eccentric circular optical illusion.
+ // Layered rings drift on independent periodic orbits, creating a slow parallax.
  case 7:{
-  const count=5*mult;
+  const count=2+mult;
   for(let i=0;i<count;i++){
-   const seed=i*2.399963;
+   const seed=i*2.3999632297;
    const cx=w*(i+.5)/count;
-   const x=cx+h*(.14+.025*(i%4))*Math.sin(a*(1+i%3)+seed);
-   const y=h*(.5+.24*Math.sin(a*(1+(i%2))+seed));
-   const rx=h*(.09+.04*(i%3))*s,ry=h*(.16+.04*(i%4))*s;
-   for(let echo=3;echo>=0;echo--){
-    const offset=h*.028*echo;
-    c.save();c.translate(x-offset,y+offset*.55);c.rotate(.18*Math.sin(a+seed));
-    c.beginPath();c.moveTo(-rx,0);
-    c.bezierCurveTo(-rx*.6,-ry,rx*.7,-ry*.55,rx,0);
-    c.bezierCurveTo(rx*.5,ry*.8,-rx*.6,ry,-rx,0);
-    c.closePath();c.fillStyle=[fg,orange,pink,ivory][(i+echo)%4];c.globalAlpha=echo===0?1:.65;c.fill();c.restore();
+   const cy=h*(.5+.09*Math.sin(seed));
+   const x=cx+h*.09*Math.sin(a*(1+i%3)+seed);
+   const y=cy+h*.07*Math.cos(a*(1+i%2)+seed);
+   const outer=h*(.19+.045*(i%3))*s;
+   // Concentric ink rings form a moire-like solar disc, with independent centers.
+   for(let j=10;j>=0;j--){
+    const radius=outer*(j+1)/11;
+    const ox=h*.025*Math.sin(a*(1+j%3)+seed+j*.32);
+    const oy=h*.025*Math.cos(a*(1+j%2)+seed-j*.25);
+    disc(c,x+ox,y+oy,radius,j%4===0?pink:j%2===0?orange:fg);
    }
+   disc(c,x+h*.018*Math.sin(a+seed),y+h*.018*Math.cos(a+seed),outer*.12,black);
   }
   break;
  }
@@ -148,17 +150,32 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    rect(c,x+step*.25,h-aperture*.55,step*.48,aperture*.55,fg);
   }break;
  }
- // 10: the last sliver of light travels as a moving broken horizontal signal.
+ // 10: optical sunset — interlaced concentric wavefronts create a moving moire.
  case 9:{
-  const step=h*.35/mult,shift=.5*step*Math.sin(a);
-  for(let row=0;row<5;row++){
-   const y=h*(.2+row*.15);
-   for(let i=-2;i<Math.ceil(w/step)+3;i++){
-    const x=i*step+shift*(row%2?1:-1);
-    const len=step*(.2+.65*(.5+.5*Math.sin(i*1.5+row*2+a)));
-    rect(c,x,y,len,h*(row===2?.035:.012)*s,row===2?ivory:row%2?pink:fg);
+  const centers=2+mult;
+  const maxR=Math.hypot(w,h);
+  const gap=h*(.072/(Math.sqrt(mult)))*s;
+  const line=h*.012*s;
+  for(let i=0;i<centers;i++){
+   const seed=i*1.9;
+   const cx=w*(i+.5)/centers+h*.055*Math.sin(a*(1+i%2)+seed);
+   const cy=h*(.48+.13*Math.sin(a+seed));
+   const shift=h*.028*Math.sin(a*(1+i%3)+seed);
+   const rings=Math.ceil(maxR/gap)+1;
+   c.strokeStyle=i%3===0?pink:i%2===0?ivory:orange;
+   c.lineWidth=line;
+   for(let j=1;j<=rings;j++){
+    const radius=j*gap+shift;
+    if(radius<=0)continue;
+    c.beginPath();c.arc(cx,cy,radius,0,TAU);c.stroke();
    }
-  }break;
+  }
+  // An opposing circular mask produces an eclipse/iris, never a hard jump.
+  const iris=h*(.09+.045*Math.sin(a))*s;
+  disc(c,w*.5+h*.12*Math.sin(a),h*.5,iris,black);
+  c.strokeStyle=fg;c.lineWidth=h*.008*s;
+  c.beginPath();c.arc(w*.5+h*.12*Math.sin(a),h*.5,iris+h*.015*s,0,TAU);c.stroke();
+  break;
  }
  }
  c.restore();
