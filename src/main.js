@@ -1,5 +1,6 @@
 import './style.css';
 import { renderAfterHours } from './afterhours-motion.js';
+import { renderSunset } from './sunset-motion.js';
 const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#EE69A7',grey:'#A3A0A0'};
 const families=[['sunset','SUNSET STUDIES','Solar discs, horizons, optical afterglow'],['night','NIGHT SHIFT','Celestial signs, orbiting constellations'],['body','BODY FRAGMENTS','Eyes, silhouettes, serial repetitions'],['type','AFTER HOURS','Editorial kinetic typography'],['liquid','LIQUID SIGNAL','Organic waves, flat-color transformations']];
 const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.orange,P.ivory],[P.black,P.pink],[P.red,P.ivory],[P.ivory,P.black],[P.black,P.orange]][fi]})));
@@ -7,7 +8,7 @@ const app=document.querySelector('#app');let selected=scenes[0],playing=true,fra
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const ellipse=(c,x,y,rx,ry,color)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);c.fillStyle=color;c.fill()};
 function render(c,w,h,phase,s=selected,p=params){const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
-if(s.family==='sunset'){const x=w*(.35+.3*Math.sin(v*1.4)),y=h*(.6+.08*Math.sin(t)),r=h*(.55+.14*Math.sin(t+v));ellipse(c,x,y,r*S,r*S,fg);c.fillStyle=P.black;c.fillRect(0,h*.7,w,h*.3);for(let i=0;i<9;i++){let ww=r*(1.7-i*.15);c.fillStyle=bg;c.fillRect(x-ww/2,h*(.73+i*.028),ww,h*.008)}if(v%2){c.fillStyle=P.red;c.fillRect(0,h*.12,w,h*.035)}}
+if(s.family==='sunset')renderSunset(c,w,h,phase,s,p,P);
 if(s.family==='night'){for(let i=0;i<85;i++){let x=((i*137.508+v*89)%997)/997*w,y=((i*79.123+v*17)%503)/503*h;ellipse(c,x,y,h*(i%9===0?.008:.003),h*(i%9===0?.008:.003),i%6===0?P.orange:fg)}let x=w*(.5+.2*Math.cos(t)),y=h*(.45+.14*Math.sin(t));ellipse(c,x,y,h*.29*S,h*.29*S,P.orange);ellipse(c,x+h*.1,y-h*.06,h*.27*S,h*.27*S,bg)}
 if(s.family==='body'){for(let i=-1;i<Math.ceil(w/(h*.95))+1;i++){let x=i*h*.95+(Math.sin(t+v)*h*.17),y=h*(.5+.07*Math.sin(t+i));c.beginPath();c.moveTo(x-h*.4,y);c.quadraticCurveTo(x,y-h*.34*S,x+h*.4,y);c.quadraticCurveTo(x,y+h*.34*S,x-h*.4,y);c.fillStyle=fg;c.fill();ellipse(c,x,y,h*.15*S,h*.15*S,P.black);ellipse(c,x,y,h*.045,h*.045,P.orange)}}
 if(s.family==='type')renderAfterHours(c,w,h,phase,s,p,P);
