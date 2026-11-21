@@ -50,5 +50,5 @@ async function exportVideo(){
  finally{stream.getTracks().forEach(t=>t.stop());playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO / 20S'}
 }
 function updateTime(){let o=document.querySelector('#time');if(o)o.textContent=(frame/fps).toFixed(2)+' / 20.00';let s=document.querySelector('#scrub');if(s)s.value=frame}
-function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%600;updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/900);document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/900,scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
+function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%600;updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/600);document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/600,scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
 shell();requestAnimationFrame(tick);
