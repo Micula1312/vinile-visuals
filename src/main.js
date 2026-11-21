@@ -1,60 +1,22 @@
-import './style.css'
-import heroImg from './assets/hero.png'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import { setupCounter } from './counter.js'
-
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
-
-<div class="ticks"></div>
-
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
-
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
-
-setupCounter(document.querySelector('#counter'))
+import './style.css';
+const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#EE69A7',grey:'#A3A0A0'};
+const families=[['sunset','SUNSET STUDIES','Solar discs, horizons, optical afterglow'],['night','NIGHT SHIFT','Celestial signs, orbiting constellations'],['body','BODY FRAGMENTS','Eyes, silhouettes, serial repetitions'],['type','AFTER HOURS','Editorial kinetic typography'],['liquid','LIQUID SIGNAL','Organic waves, flat-color transformations']];
+const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.orange,P.ivory],[P.black,P.pink],[P.red,P.ivory],[P.ivory,P.black],[P.black,P.orange]][fi]})));
+const app=document.querySelector('#app');let selected=scenes[0],playing=true,frame=0,last=0,params={scale:1,speed:1,dither:0},resolution={w:3000,h:512},duration=30,fps=30;
+const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+const ellipse=(c,x,y,rx,ry,color)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);c.fillStyle=color;c.fill()};
+function render(c,w,h,phase,s=selected,p=params){const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
+if(s.family==='sunset'){const x=w*(.35+.3*Math.sin(v*1.4)),y=h*(.6+.08*Math.sin(t)),r=h*(.55+.14*Math.sin(t+v));ellipse(c,x,y,r*S,r*S,fg);c.fillStyle=P.black;c.fillRect(0,h*.7,w,h*.3);for(let i=0;i<9;i++){let ww=r*(1.7-i*.15);c.fillStyle=bg;c.fillRect(x-ww/2,h*(.73+i*.028),ww,h*.008)}if(v%2){c.fillStyle=P.red;c.fillRect(0,h*.12,w,h*.035)}}
+if(s.family==='night'){for(let i=0;i<85;i++){let x=((i*137.508+v*89)%997)/997*w,y=((i*79.123+v*17)%503)/503*h;ellipse(c,x,y,h*(i%9===0?.008:.003),h*(i%9===0?.008:.003),i%6===0?P.orange:fg)}let x=w*(.5+.2*Math.cos(t)),y=h*(.45+.14*Math.sin(t));ellipse(c,x,y,h*.29*S,h*.29*S,P.orange);ellipse(c,x+h*.1,y-h*.06,h*.27*S,h*.27*S,bg)}
+if(s.family==='body'){for(let i=-1;i<Math.ceil(w/(h*.95))+1;i++){let x=i*h*.95+(Math.sin(t+v)*h*.17),y=h*(.5+.07*Math.sin(t+i));c.beginPath();c.moveTo(x-h*.4,y);c.quadraticCurveTo(x,y-h*.34*S,x+h*.4,y);c.quadraticCurveTo(x,y+h*.34*S,x-h*.4,y);c.fillStyle=fg;c.fill();ellipse(c,x,y,h*.15*S,h*.15*S,P.black);ellipse(c,x,y,h*.045,h*.045,P.orange)}}
+if(s.family==='type'){let texts=['After Hours','Dance Until Late','Vinile.','Amore.','Stay a Little Longer','Good Music','La Dolce Notte','Tonight Is Yours','Dance Dance Dance','Until the Morning'];let txt=texts[v];c.save();c.translate(w/2+Math.sin(t)*w*.06,h*.68);c.rotate(Math.sin(t)*.035);c.textAlign='center';c.fillStyle=fg;c.font=`italic ${Math.round(h*(txt.length>16?.49:.72)*S)}px Georgia,serif`;c.fillText(txt,0,0);c.restore();c.fillStyle=v%2?P.orange:P.pink;c.fillRect(w*.04,h*.84,w*.92,h*.022)}
+if(s.family==='liquid'){for(let k=0;k<4;k++){c.beginPath();c.moveTo(0,h);for(let x=0;x<=w+20;x+=Math.max(8,w/250)){let y=h*(.18+k*.19)+Math.sin(x/w*Math.PI*(3+v%4)+t+k*1.3)*h*.14*S+Math.cos(x/w*Math.PI*8-t+k)*h*.035;c.lineTo(x,y)}c.lineTo(w,h);c.closePath();c.fillStyle=[fg,P.red,P.pink,P.ivory][k];c.fill()}}
+if(p.dither>0){c.save();c.globalAlpha=p.dither*.38;c.fillStyle=P.black;let step=Math.max(6,Math.round(h/64));for(let y=0;y<h;y+=step)for(let x=(Math.floor(y/step)%2)*step;x<w;x+=step*2)c.fillRect(x,y,Math.max(1,step*.18),Math.max(1,step*.18));c.restore()}}
+function shell(){app.innerHTML=`<header><a class="brand" href="#project">VINILE<span>®</span> <small>VISUAL LAB</small></a><nav><a href="#project" id="nav-project">PROJECT</a><a href="#studio" id="nav-studio">STUDIO</a></nav><span class="meta">ROMA / 2026</span></header><main id="page"></main>`;window.addEventListener('hashchange',route);route()}
+function route(){let studio=location.hash==='#studio';document.querySelector('#nav-project').classList.toggle('active',!studio);document.querySelector('#nav-studio').classList.toggle('active',studio);studio?studioPage():projectPage()}
+function projectPage(){document.querySelector('#page').innerHTML=`<section class="hero"><div class="eyebrow">01 / VISUAL IDENTITY — ART DIRECTION</div><h1>After <em>Hours.</em></h1><div class="herofoot">DANCE UNTIL LATE <span>ANALOG FEELING / DIGITAL BEHAVIOUR</span></div></section><section class="statement"><span class="eyebrow">THE CONCEPT</span><h2>Five worlds.<br>One visual language.</h2><p>50 generative loops for a nocturnal atmosphere. Flat colors, bitmap treatments, cinematic symbols and expressive editorial typography. A warm, graphic system that shifts from sunset to night, body, type and fluid abstraction.</p></section><section class="palette"><span class="eyebrow">THE PALETTE / SIX INKS</span><div class="swatches">${Object.entries(P).map(([k,v])=>`<div><div class="swatch" style="background:${v}"></div><small>${k.toUpperCase()}<br>${v}</small></div>`).join('')}</div></section><section><div class="eyebrow">FIVE WORLDS / LIVE STUDIES</div><div class="worlds">${families.map(([id,name,desc],i)=>`<article class="world"><canvas data-scene="${id}" width="900" height="154"></canvas><div class="worldlabel"><strong>0${i+1} / ${name}</strong><span>${desc}</span></div></article>`).join('')}</div></section><section class="statement"><span class="eyebrow">THE METHOD</span><h2>Flat color. <em>Moving matter.</em></h2><p>All scenes are procedural and time-based. Each 30-second animation repeats continuously; a fixed seed and normalized timeline make every frame reproducible. Dither and halftone are adjustable, never a substitute for strong graphic composition.</p><a class="cta" href="#studio">OPEN THE STUDIO →</a></section>`}
+function studioPage(){document.querySelector('#page').innerHTML=`<div class="studio"><aside><div class="eyebrow">SCENE LIBRARY / 50</div>${families.map(([id,name],i)=>`<div class="family"><h3>0${i+1} / ${name}</h3><div class="scenegrid">${scenes.filter(s=>s.family===id).map(s=>`<button class="scene ${selected.id===s.id?'sel':''}" data-id="${s.id}">${String(s.variant+1).padStart(2,'0')}</button>`).join('')}</div></div>`).join('')}</aside><section class="workspace"><div class="toolbar"><span id="scene-name">${selected.name}</span><span>30 SEC / SEAMLESS</span></div><div class="screen"><canvas id="preview" width="1500" height="256"></canvas></div><div class="transport"><button id="play">${playing?'PAUSE':'PLAY'}</button><input id="scrub" type="range" min="0" max="899" value="${frame}"><output id="time">${(frame/30).toFixed(2)} / 30.00</output></div><div class="settings"><div class="control"><label>SIZE <output id="scale-out">${params.scale.toFixed(2)}</output></label><input id="scale" type="range" min="0.3" max="1.8" step="0.01" value="${params.scale}"></div><div class="control"><label>MOTION CYCLES <output id="speed-out">${params.speed}</output></label><input id="speed" type="range" min="1" max="6" step="1" value="${params.speed}"></div><div class="control"><label>BITMAP <output id="dither-out">${params.dither.toFixed(2)}</output></label><input id="dither" type="range" min="0" max="1" step="0.01" value="${params.dither}"></div><div class="control"><label>BACKGROUND</label><select id="bg">${Object.entries(P).map(([n,c])=>`<option value="${c}" ${selected.colors[0]===c?'selected':''}>${n.toUpperCase()}</option>`).join('')}</select></div><div class="control"><label>FOREGROUND</label><select id="fg">${Object.entries(P).map(([n,c])=>`<option value="${c}" ${selected.colors[1]===c?'selected':''}>${n.toUpperCase()}</option>`).join('')}</select></div></div><div class="renderbar"><label>WIDTH <input id="width" type="number" min="320" max="7680" value="${resolution.w}"></label><label>HEIGHT <input id="height" type="number" min="100" max="4320" value="${resolution.h}"></label><button id="still">EXPORT PNG FRAME</button><button id="preset">SAVE PRESET JSON</button></div><p class="note">Preview and exports use the same deterministic canvas renderer. PNG and JSON work now; full video rendering and DXV3 conversion are the next milestone. Loop boundary: frame 900 = frame 0, frame 899 transitions into frame 0 without a duplicated hold.</p></section></div>`;
+document.querySelectorAll('.scene').forEach(b=>b.onclick=()=>{selected=scenes.find(s=>s.id===b.dataset.id);studioPage()});document.querySelector('#play').onclick=()=>{playing=!playing;document.querySelector('#play').textContent=playing?'PAUSE':'PLAY'};document.querySelector('#scrub').oninput=e=>{frame=+e.target.value;playing=false;document.querySelector('#play').textContent='PLAY';updateTime()};for(let k of ['scale','speed','dither'])document.querySelector('#'+k).oninput=e=>{params[k]=+e.target.value;document.querySelector('#'+k+'-out').textContent=params[k].toFixed(k==='speed'?0:2)};for(let [id,i] of [['bg',0],['fg',1]])document.querySelector('#'+id).onchange=e=>selected.colors[i]=e.target.value;for(let [id,key] of [['width','w'],['height','h']])document.querySelector('#'+id).onchange=e=>resolution[key]=clamp(+e.target.value,100,7680);document.querySelector('#still').onclick=()=>{const cv=document.createElement('canvas');cv.width=resolution.w;cv.height=resolution.h;render(cv.getContext('2d'),cv.width,cv.height,frame/900);cv.toBlob(blob=>{let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=selected.id+'-'+frame+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})};document.querySelector('#preset').onclick=()=>{let blob=new Blob([JSON.stringify({scene:selected,params,resolution,duration,fps},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=selected.id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}}
+function updateTime(){let o=document.querySelector('#time');if(o)o.textContent=(frame/fps).toFixed(2)+' / 30.00';let s=document.querySelector('#scrub');if(s)s.value=frame}
+function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%900;updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/900);document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/900,scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
+shell();requestAnimationFrame(tick);
