@@ -61,7 +61,7 @@ export function renderOptical(c,w,h,phase,scene,params,P){
  gl.uniform1f(u.distort,params.distort??.55);
  gl.uniform1f(u.frequency,params.frequency??1);
  gl.uniform1f(u.blur,params.blur??.08);
- rgb(u.background,bg);rgb(u.foreground,fg);rgb(u.accent,P.orange);
+ rgb(u.background,bg);rgb(u.foreground,fg);rgb(u.accent,P.highlight);
  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
  c.drawImage(canvas,0,0,w,h);
 }
