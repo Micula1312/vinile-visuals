@@ -10,8 +10,8 @@ const defaultHighlights={sunset:P.pink,night:P.blue,body:P.violet,type:P.blue,li
 const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
 const defaultParams={scale:1,speed:1,dither:0,blur:.08,distort:.55,frequency:1,multiply:1,copies:1,pulse:0,drift:0,cameraDepth:0,rotationX:.15,rotationY:.25,perspective:48,geometryDensity:1};
-const defaultResolution={w:2304,h:1024};
-const app=document.querySelector('#app');let selected=scenes[0],playing=true,frame=0,last=0,params={...defaultParams},resolution={w:2304,h:1024},duration=20,fps=30,quality=16;
+const defaultResolution={w:2304,h:512};
+const app=document.querySelector('#app');let selected=scenes[0],playing=true,frame=0,last=0,params={...defaultParams},resolution={w:2304,h:512},duration=20,fps=30,quality=16;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const ellipse=(c,x,y,rx,ry,color)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);c.fillStyle=color;c.fill()};
 function renderBase(c,w,h,phase,s=selected,p=params){const palette={...P,highlight:highlights[s.family]};const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
