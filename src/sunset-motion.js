@@ -8,7 +8,7 @@ const rect=(c,x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(x,y,w,h)};
 const bandSun=(c,x,y,r,ink,cut)=>{disc(c,x,y,r,ink);c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();for(let k=0;k<5;k++)rect(c,x-r,y+r*(.12+k*.27),2*r,r*.065,cut);c.restore()};
 export function renderSunset(c,w,h,phase,scene,params,P){
  const v=scene.variant, bg=scene.colors[0],fg=scene.colors[1],s=params.scale||1;
- const t=wrap(phase*(params.speed||1),1), a=TAU*t, unit=h, orange=P.orange,pink=P.pink,red=P.red,ivory=P.ivory,black=P.black;
+ const t=wrap(phase*(params.speed||1),1), a=TAU*t, unit=h, orange=P.orange,pink=P.pink,red=P.orange,ivory=P.ivory,black=P.black;
  c.save();c.beginPath();c.rect(0,0,w,h);c.clip();rect(c,0,0,w,h,bg);
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
@@ -23,7 +23,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 02: horizontal procession, repeated with exact wrap.
  case 1:{
-  const step=h*.9,shift=t*step;
+  const step=h*.9,shift=.5*step*Math.sin(a);
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
    const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.31:.26)*s;
    bandSun(c,x,y,r,i%3===0?pink:fg,bg);
@@ -59,7 +59,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 04: slanting long shadows sweep across the LED, without a visible sun.
  case 3:{
-  const step=h*.47,dx=h*(.7+.5*Math.sin(a)),shift=t*step;
+  const step=h*.47,dx=h*(.7+.5*Math.sin(a)),shift=.5*step*Math.sin(a);
   for(let i=-4;i<Math.ceil(w/step)+5;i++){
    const x=i*step+shift,y=h*.38;
    c.fillStyle=black;c.beginPath();c.moveTo(x,y);c.lineTo(x+dx,y+h*.7);c.lineTo(x+dx+h*.14,y+h*.7);c.lineTo(x+h*.14,y);c.fill();
@@ -72,7 +72,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
   for(let row=0;row<24;row++){
    const y=h*(.24+row*.032),step=h*(.29+(row%5)*.15),speed=(row%2?1:-1);
    for(let i=-2;i<Math.ceil(w/step)+3;i++){
-    const x=i*step+speed*t*step+(row%4)*h*.12;
+    const x=i*step+speed*.5*step*Math.sin(a)+(row%4)*h*.12;
     rect(c,x,y,step*(.27+.28*Math.sin(row*2)**2),h*(.006+row*.0005),row%4===0?ivory:row%3===0?pink:fg);
    }
   }break;
@@ -102,7 +102,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  case 7:{
   const step=h*.95;
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
-   const x=i*step+t*step,y=h*(.52+.1*Math.sin(a+i)),r=h*.3*s;
+   const x=i*step+.5*step*Math.sin(a),y=h*(.52+.1*Math.sin(a+i)),r=h*.3*s;
    for(let j=5;j>=0;j--)disc(c,x-j*h*.065,y+j*h*.028,r*(1-j*.085),[red,pink,orange,red,pink,fg][j]);
   }break;
  }
@@ -111,7 +111,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
   const colors=[orange,red,pink,ivory,black];
   const step=w/13;
   for(let i=-2;i<16;i++){
-   const x=i*step+t*step;
+   const x=i*step+.5*step*Math.sin(a);
    rect(c,x,0,step+1,h,colors[wrap(i,5)]);
    const aperture=h*(.2+.55*(.5+.5*Math.sin(a+i*.85)));
    rect(c,x+step*.25,0,step*.48,aperture,bg);
@@ -120,7 +120,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 10: the last sliver of light travels as a moving broken horizontal signal.
  case 9:{
-  const step=h*.35,shift=t*step;
+  const step=h*.35,shift=.5*step*Math.sin(a);
   for(let row=0;row<5;row++){
    const y=h*(.2+row*.15);
    for(let i=-2;i<Math.ceil(w/step)+3;i++){
