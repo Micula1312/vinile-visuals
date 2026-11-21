@@ -1,84 +1,213 @@
 import * as THREE from 'three';
-// NIGHT SHIFT / ten deterministic spatial scores. One reusable WebGL renderer.
-const TAU=Math.PI*2;
-let renderer,canvas,scene,camera,group,objects=[],mode=-1,light,warned=false;
-const material=(color,wire=false,opacity=1)=>new THREE.MeshBasicMaterial({color,wireframe:wire,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity===1});
-const lineMaterial=color=>new THREE.LineBasicMaterial({color,transparent:true,opacity:.8});
-function mesh(geometry,mat,x=0,y=0,z=0){const o=new THREE.Mesh(geometry,mat);o.position.set(x,y,z);group.add(o);objects.push(o);return o}
-function line(points,color){const g=new THREE.BufferGeometry().setFromPoints(points);const o=new THREE.LineLoop(g,lineMaterial(color));group.add(o);objects.push(o);return o}
-function init(){
- canvas=document.createElement('canvas');
- renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});
- renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
- scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(48,2.25,.1,150);
- group=new THREE.Group();scene.add(group);
+// NIGHT SHIFT: ten full-frame shader worlds, rendered by Three.js.
+// All motion derives from the normalized phase; no accumulated state.
+const vertex=`
+varying vec2 vUv;
+void main(){vUv=uv;gl_Position=vec4(position,1.0);}
+`;
+const fragment=`
+precision highp float;
+varying vec2 vUv;
+uniform vec2 uResolution;
+uniform float uTime,uScale,uDensity,uDepth,uRotX,uRotY,uPerspective;
+uniform float uVariant;
+uniform vec3 uBg,uFg,uAccent;
+#define PI 3.141592653589793
+#define TAU 6.283185307179586
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+11.7;a*=.5;}return v;}
+float line(float x,float w){return 1.-smoothstep(w,w*2.4,abs(x));}
+float ring(vec2 p,float r,float w){return line(length(p)-r,w);}
+float glow(float d,float w){return w/(abs(d)+w);}
+vec2 rot(vec2 p,float a){return mat2(cos(a),-sin(a),sin(a),cos(a))*p;}
+vec3 ink(float v){return mix(uFg,uAccent,clamp(v,0.,1.));}
+void main(){
+ vec2 uv=vUv*2.-1.;
+ float aspect=uResolution.x/uResolution.y;
+ vec2 p=vec2(uv.x*aspect,uv.y);
+ float t=uTime*TAU;
+ float d=max(.5,uDensity);
+ float z=max(.3,uScale);
+ float depth=uDepth*.13;
+ float rx=uRotX,ry=uRotY;
+ float persp=uPerspective/48.;
+ float scene=uVariant;
+ vec3 col=uBg;
+ float lum=0.,detail=0.,halo=0.;
+ // 01 / CHROME CATHEDRAL: infinite ribbed nave and luminous vanishing point.
+ if(scene<.5){
+  vec2 q=p/(1.8+depth);
+  float f=1./max(.14,abs(q.y)+.11);
+  vec2 hall=vec2(q.x*f,q.y*f);
+  float ribs=pow(.5+.5*cos(hall.x*2.4*d+sin(t)*.3),18.);
+  float columns=pow(.5+.5*cos(hall.y*3.2+cos(t)*.3),22.);
+  float vault=exp(-abs(abs(hall.x)-1.7)*2.2);
+  float horizon=exp(-length(q)*1.8);
+  lum=(ribs*.55+columns*.5)*vault+.45*horizon;
+  detail=pow(.5+.5*cos(hall.x*1.2+hall.y*2.7),10.)*vault;
+  halo=exp(-length(q)*.8)*.3;
+ }
+ // 02 / DATA TUNNEL: perspective laser lattice, concentric portals.
+ else if(scene<1.5){
+  vec2 q=rot(p,ry*.2);
+  float r=length(q)/(1.5+depth);
+  float a=atan(q.y,q.x);
+  float tunnel=1./max(.09,r);
+  float spokes=pow(.5+.5*cos(a*(10.+d*3.)+sin(t)*.25),25.);
+  float portals=pow(.5+.5*cos(log(tunnel)*13.+sin(t)*1.5),22.);
+  lum=spokes*.4+portals*.65;
+  detail=pow(.5+.5*cos(log(tunnel)*6.-a*8.),15.);
+  halo=exp(-r*.8)*.6;
+ }
+ // 03 / NEURAL REEF: branching filaments and living cellular membranes.
+ else if(scene<2.5){
+  vec2 q=p/(1.4+depth);
+  q=rot(q,ry*.12);
+  float n=fbm(q*1.8*d+vec2(cos(t),sin(t))*.35);
+  float veins=sin(q.x*9.+n*10.)*cos(q.y*7.-n*8.);
+  lum=pow(abs(veins),18.)*.85;
+  detail=pow(.5+.5*sin(n*21.+q.y*3.),18.)*.7;
+  halo=pow(n,2.)*.45;
+ }
+ // 04 / SYNTHETIC OCEAN: wireframe waves receding to a glowing horizon.
+ else if(scene<3.5){
+  vec2 q=p/(1.8+depth);
+  float horizon=q.y+.12;
+  float inv=1./max(.065,abs(horizon));
+  float xx=q.x*inv;
+  float wave=sin(xx*.7+sin(t)*.4)*.24+sin(xx*1.8+cos(t)*.3)*.08;
+  float gridX=pow(.5+.5*cos(xx*1.4*d),24.);
+  float gridZ=pow(.5+.5*cos(inv*2.4+wave),24.);
+  float mask=smoothstep(.05,-.12,horizon);
+  lum=(gridX*.48+gridZ*.75)*mask;
+  detail=exp(-abs(horizon)*18.)*.95;
+  halo=exp(-abs(horizon)*5.)*.3;
+ }
+ // 05 / MEGACITY: layered neon towers and atmospheric scanlines.
+ else if(scene<4.5){
+  vec2 q=p/(1.4+depth);
+  float city=0.;
+  for(int i=0;i<5;i++){
+   float fi=float(i);
+   vec2 v=q*mix(1.1,3.8,fi/5.);
+   float id=floor(v.x+fi*13.);
+   float height=.25+hash(vec2(id,fi))*1.4;
+   float tower=step(-.85,v.y)*step(v.y,height-.65);
+   float edge=line(fract(v.x)-.5,.025);
+   float windows=pow(.5+.5*cos(v.y*18.+fi*2.),24.)*pow(.5+.5*cos(v.x*12.),14.);
+   city+=tower*(edge*.38+windows*.35)*(1.-fi*.11);
+  }
+  lum=city;
+  detail=pow(.5+.5*cos(q.y*38.+sin(t)*.2),35.)*.12;
+  halo=exp(-abs(q.y+.3)*1.5)*.2;
+ }
+ // 06 / DIGITAL STORM: dense particle currents forming an expanding vortex.
+ else if(scene<5.5){
+  vec2 q=p/(1.5+depth);
+  float a=atan(q.y,q.x),r=length(q);
+  float spiral=a*8.+log(r+.06)*22.+sin(t)*.5;
+  float strands=pow(.5+.5*cos(spiral),30.);
+  float dust=pow(noise(q*22.*d+vec2(cos(t),sin(t))*.1),9.);
+  lum=strands*(.3+.7*dust)*1.5;
+  detail=pow(.5+.5*cos(a*42.+r*50.),35.)*.35;
+  halo=exp(-r*.75)*.55;
+ }
+ // 07 / LIQUID CIRCUIT: chrome-like fluid strata and flowing light.
+ else if(scene<6.5){
+  vec2 q=p/(1.5+depth);
+  float n=fbm(q*2.5+vec2(cos(t),sin(t))*.24);
+  float bend=q.y+sin(q.x*1.7+n*3.+sin(t)*.2)*.45;
+  lum=pow(.5+.5*cos(bend*14.*d+n*8.),28.);
+  detail=pow(.5+.5*cos(bend*5.+q.x*1.2),12.)*.5;
+  halo=fbm(q*1.3)*.45;
+ }
+ // 08 / IMPOSSIBLE GRID: folding non-Euclidean optical architecture.
+ else if(scene<7.5){
+  vec2 q=rot(p/(1.4+depth),ry*.15);
+  float fold=sin(q.y*2.+sin(t)*.2)*.5;
+  q.x+=fold;
+  float n=fbm(q*1.2);
+  q=rot(q,rx*.15+n*.5);
+  float perspective=1./max(.2,abs(q.y+.6));
+  vec2 g=vec2(q.x*perspective,q.y*perspective);
+  lum=pow(.5+.5*cos(g.x*5.*d),35.)*.65+pow(.5+.5*cos(g.y*5.*d),35.)*.65;
+  detail=pow(.5+.5*cos((g.x+g.y)*2.),25.)*.4;
+  halo=exp(-length(q)*.8)*.25;
+ }
+ // 09 / PHOTON GARDEN: bioluminescent filaments in a volumetric field.
+ else if(scene<8.5){
+  vec2 q=p/(1.4+depth);
+  for(int i=0;i<9;i++){
+   float fi=float(i);
+   float x=sin(q.y*(1.4+fi*.23)+fi*1.71+sin(t)*.3)*(.3+fi*.14)+sin(fi*8.2)*1.2;
+   float dist=abs(q.x-x);
+   lum+=glow(dist,.008)*(.08+fi*.012);
+   detail+=glow(dist,.045)*.015;
+  }
+  halo=fbm(q*1.4+vec2(sin(t)*.15,cos(t)*.15))*.22;
+ }
+ // 10 / SINGULARITY: gravitational lens, accretion disc, optical interference.
+ else {
+  vec2 q=rot(p/(1.7+depth),ry*.12);
+  float r=length(q),a=atan(q.y,q.x);
+  float warped=r+.12/(r+.15);
+  float disk=exp(-abs(q.y+sin(a*3.+sin(t)*.2)*.13)*11.)*smoothstep(.35,.9,r);
+  lum=disk*(.5+.5*cos(a*18.+warped*8.))*.9;
+  detail=ring(q,.54,.018)+ring(q,.67,.012)+ring(q,.8,.008);
+  halo=glow(r-.48,.08)*.45;
+ }
+ float scan=pow(.5+.5*cos((uv.y+sin(t)*.004)*950.),25.)*.055;
+ float intensity=clamp(lum+detail*.65,0.,1.5);
+ col+=ink(.2+.65*detail)*(intensity*.82);
+ col+=uAccent*halo*.3;
+ col+=uFg*scan;
+ // Avoid an opaque blank frame: all ten worlds retain their own geometry.
+ col=clamp(col,0.,1.);
+ gl_FragColor=vec4(col,1.);
 }
-function build(v,fg,accent,bg,density){
- if(group){scene.remove(group);group.traverse(o=>{o.geometry?.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose()}})}
- group=new THREE.Group();scene.add(group);objects=[];mode=v;
- const a=fg,b=accent;
- const torus=(r,t,x,y,z,color,wire=false)=>mesh(new THREE.TorusGeometry(r,t,10,96),material(color,wire),x,y,z);
- const box=(x,y,z,sx,sy,sz,color,wire=false)=>mesh(new THREE.BoxGeometry(sx,sy,sz),material(color,wire),x,y,z);
- if(v===0){for(let i=0;i<3+density;i++){let o=torus(1.15+i*.19,.035+i*.006,0,0,0,i%2?a:b);o.rotation.set(i*.5,i*.8,0);o.userData={i}}}
- if(v===1){for(let i=0;i<12+density*5;i++){let o=box(0,0,-i*.65,3.3,1.6,.02,i%3?b:a,true);o.userData={i}}}
- if(v===2){for(let i=0;i<6+density*3;i++){let o=mesh(new THREE.IcosahedronGeometry(.25+(i%3)*.12,2),material(i%3?a:b,true),Math.sin(i*2.4)*1.8,Math.cos(i*1.6)*.9,-(i%4)*.5);o.userData={i}}}
- if(v===3){const geo=new THREE.PlaneGeometry(9,5,65,35);geo.rotateX(-Math.PI/2);const o=mesh(geo,material(a,true));o.userData={terrain:true,base:Float32Array.from(geo.attributes.position.array)};o.rotation.x=.18;o.position.y=-.7}
- if(v===4){for(let i=0;i<5+density*3;i++){let o=box((i-(4+density*3)/2)*.52,0,-i*.22,.18,1.2+(i%4)*.45,.22,i%3?a:b);o.userData={i}}}
- if(v===5){const n=450+density*350;const p=new Float32Array(n*3);for(let i=0;i<n;i++){const r=.2+2.2*Math.sqrt(i/n),theta=i*2.39996;p[i*3]=r*Math.cos(theta);p[i*3+1]=r*Math.sin(theta)*.55;p[i*3+2]=Math.sin(i*.17)*1.1}const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(p,3));const o=new THREE.Points(geo,new THREE.PointsMaterial({color:a,size:.035,sizeAttenuation:true}));group.add(o);objects.push(o)}
- if(v===6){for(let j=0;j<2+density;j++){const pts=[];for(let i=0;i<180;i++){const t=i/179*TAU*2;pts.push(new THREE.Vector3(Math.cos(t+j)*(.6+j*.24),Math.sin(t*1.5+j)*.65,t/TAU-1))}const curve=new THREE.CatmullRomCurve3(pts);let o=mesh(new THREE.TubeGeometry(curve,240,.055,8,false),material(j%2?a:b));o.userData={i:j}}}
- if(v===7){for(let z=0;z<7+density*3;z++)for(let x=-3;x<=3;x++){let o=box(x*.48,Math.sin(x+z)*.2,-z*.62,.37,.37,.37,(x+z)%3?a:b,true);o.userData={i:z+x}}}
- if(v===8){for(let i=0;i<8+density*3;i++){const pts=[];for(let j=0;j<120;j++){let t=j/119*TAU;pts.push(new THREE.Vector3(Math.cos(t+i*.6)*(1+i*.08),Math.sin(t+i*.6)*(.2+i*.06),Math.sin(t*3+i)*.4))}let o=line(pts,i%2?a:b);o.userData={i}}}
- if(v===9){for(let i=0;i<16+density*4;i++){let o=torus(.22+i*.095,.012,0,0,-i*.11,i%4?a:b);o.userData={i}}}
+`;
+let renderer,scene,camera,quad,uniforms,failed=false;
+function setup(){
+ const canvas=document.createElement('canvas');
+ renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+ renderer.setPixelRatio(1);
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
+ uniforms={
+ uResolution:{value:new THREE.Vector2(1,1)},uTime:{value:0},uScale:{value:1},
+ uDensity:{value:1},uDepth:{value:0},uRotX:{value:0},uRotY:{value:0},
+ uPerspective:{value:48},uVariant:{value:0},uBg:{value:new THREE.Color()},
+ uFg:{value:new THREE.Color()},uAccent:{value:new THREE.Color()}
+ };
+ scene=new THREE.Scene();
+ camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+ quad=new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({vertexShader:vertex,fragmentShader:fragment,uniforms,depthTest:false,depthWrite:false}));
+ scene.add(quad);
 }
 export function renderNight(c,w,h,phase,s,p,P){
  try{
-  if(!renderer)init();
-  const rw=Math.max(2,Math.min(w,1600)),rh=Math.max(2,Math.round(h*rw/w));
-  camera.aspect=rw/rh;camera.updateProjectionMatrix();
+  if(!renderer)setup();
+  const rw=Math.min(1600,Math.max(2,Math.round(w)));
+  const rh=Math.max(2,Math.round(h*rw/w));
   renderer.setSize(rw,rh,false);
-  const density=Math.max(0,Math.round((p.geometryDensity??1)-1));
-  const key=s.variant+'|'+s.colors[1]+'|'+P.highlight+'|'+density;
-  if(mode!==key){build(s.variant,s.colors[1],P.highlight,s.colors[0],density);mode=key}
-  scene.background=new THREE.Color(s.colors[0]);
-  const t=TAU*((phase*(p.speed||1))%1),v=s.variant;
-  const size=p.scale||1;group.scale.setScalar(size*1.55);
-  const rotX=p.rotationX??.15,rotY=p.rotationY??.25;
-  group.rotation.set(rotX+Math.sin(t)*.12,rotY+Math.sin(t)*.24,0);
-  if(v===0)objects.forEach((o,i)=>{o.rotation.x=t*(i%2?1:-1)+i*.55;o.rotation.y=t*(i%3?1:-1)+i*.7});
-  if(v===1)objects.forEach((o,i)=>{o.position.z=-i*.65+(Math.sin(t)*.4);o.rotation.z=Math.sin(t+i*.2)*.08});
-  if(v===2)objects.forEach((o,i)=>{o.position.y=Math.cos(t+i*1.2)*.8;o.position.x=Math.sin(t+i*.7)*1.7;o.rotation.y=t});
-  if(v===3){const o=objects[0],attr=o.geometry.attributes.position,base=o.userData.base;for(let i=0;i<attr.count;i++){const x=base[i*3],z=base[i*3+2];attr.setY(i,.25*Math.sin(x*1.5+t)*Math.cos(z*2-t))}attr.needsUpdate=true}
-  if(v===4)objects.forEach((o,i)=>{o.scale.y=.7+.3*Math.sin(t+i*.5);o.position.y=Math.sin(t+i*.4)*.25});
-  if(v===5)objects[0].rotation.z=t;
-  if(v===6)objects.forEach((o,i)=>{o.rotation.z=t*(i%2?1:-1)*.4;o.rotation.y=Math.sin(t+i)*.4});
-  if(v===7)objects.forEach((o,i)=>{o.rotation.x=t*.15;o.rotation.y=t*.12;o.position.y=Math.sin(t+i*.4)*.22});
-  if(v===8)objects.forEach((o,i)=>{o.rotation.y=t*(i%2?1:-1)*.3;o.rotation.z=Math.sin(t+i)*.15});
-  if(v===9)objects.forEach((o,i)=>{o.position.z=-i*.11+.15*Math.sin(t+i*.25);o.scale.setScalar(.9+.1*Math.sin(t+i*.4))});
-  const depth=p.cameraDepth??0;camera.fov=p.perspective??48;camera.updateProjectionMatrix();
-  camera.position.set(0,0,Math.max(2.5,4.5-depth));camera.lookAt(0,0,v===3?-1:0);
+  uniforms.uResolution.value.set(rw,rh);
+  uniforms.uTime.value=(phase*(p.speed||1))%1;
+  uniforms.uScale.value=p.scale||1;
+  uniforms.uDensity.value=p.geometryDensity||1;
+  uniforms.uDepth.value=p.cameraDepth||0;
+  uniforms.uRotX.value=p.rotationX||0;
+  uniforms.uRotY.value=p.rotationY||0;
+  uniforms.uPerspective.value=p.perspective||48;
+  uniforms.uVariant.value=s.variant;
+  uniforms.uBg.value.set(s.colors[0]);
+  uniforms.uFg.value.set(s.colors[1]);
+  uniforms.uAccent.value.set(P.highlight);
   renderer.render(scene,camera);
-  // The output is copied to the 2D export canvas after each WebGL frame.
   c.drawImage(renderer.domElement,0,0,w,h);
- }catch(err){if(!warned){console.error('Night Shift 3D renderer failed; showing Canvas fallback:',err);warned=true}nightFallback(c,w,h,phase,s,p,P)}
-}
-
-function nightFallback(c,w,h,phase,s,p,P){
- const t=TAU*phase*(p.speed||1),v=s.variant;
- c.fillStyle=s.colors[0];c.fillRect(0,0,w,h);
- c.save();c.translate(w/2,h/2);
- const unit=h*.34*(p.scale||1),accent=P.highlight,fg=s.colors[1];
- c.lineWidth=Math.max(2,h*.007);
- // Visible diagnostic-grade fallback, still animated and scene-specific.
- const n=5+v*2;
- for(let i=0;i<n;i++){
-  const a=t*(i%2?1:-1)*.2+i*TAU/n;
-  const x=Math.cos(a)*(w*.12+i*w*.012),y=Math.sin(a)*h*.22;
-  c.strokeStyle=i%3===0?accent:fg;
-  c.beginPath();
-  if(v%3===0)c.ellipse(x,y,unit*(.3+i*.12),unit*(.25+i*.09),a,0,TAU);
-  else if(v%3===1)c.rect(x-unit*.4,y-unit*.4,unit*.8,unit*.8);
-  else{c.moveTo(x,y);c.lineTo(x+Math.cos(a)*unit,y+Math.sin(a)*unit)}
-  c.stroke();
+ }catch(err){
+  if(!failed){console.error('Night Shift shader error:',err);failed=true}
+  c.fillStyle=s.colors[0];c.fillRect(0,0,w,h);
+  c.strokeStyle=P.highlight;c.lineWidth=Math.max(2,h*.01);
+  for(let i=0;i<20;i++){c.beginPath();c.ellipse(w/2,h/2,h*(.1+i*.04),h*(.07+i*.02),0,0,Math.PI*2);c.stroke()}
  }
- c.restore();
 }
