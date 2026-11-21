@@ -5,7 +5,7 @@ const wrap=(x,m)=>((x%m)+m)%m;
 const star=(c,x,y,r,color,points=5)=>{c.beginPath();for(let i=0;i<points*2;i++){const a=-Math.PI/2+i*Math.PI/points,rr=i%2?r*.43:r;c.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr)}c.closePath();c.fillStyle=color;c.fill()};
 export function renderAfterHours(c,w,h,phase,scene,params,palette){
  const v=scene.variant, [bg,fg]=scene.colors, t=phase*TAU*params.speed;
- const ivory=palette.ivory,orange=palette.orange,pink=palette.blue,black=palette.black;
+ const ivory=palette.ivory,orange=palette.orange,pink=palette.highlight,black=palette.black;
  const font=(size,italic=true)=>{c.font=(italic?'italic ':'')+'600 '+Math.round(size)+'px "Bodoni Moda",Georgia,serif';c.textAlign='center';c.textBaseline='middle'};
  const title=['After Hours','Dance Until Late','VINILE','Amore.','Stay a Little Longer','Good Music','La Dolce Notte','Tonight Is Yours','Dance Dance Dance','Until the Morning'][v];
  const size=h*(title.length>16?.52:title.length>11?.65:.9)*params.scale;
