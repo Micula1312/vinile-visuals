@@ -47,8 +47,8 @@ async function exportVideo(){
   const ext=mime.startsWith('video/mp4')?'mp4':'webm';const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=snapshot.scene.id+'-'+snapshot.duration+'s-'+snapshot.fps+'fps-'+snapshot.width+'x'+snapshot.height+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
   status.textContent='Export complete: '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'. Verify playback before using in Resolume.';
  }catch(err){if(recorder.state==='recording')recorder.stop();status.textContent='Export failed: '+err.message}
- finally{stream.getTracks().forEach(t=>t.stop());playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO / 20S'}
+ finally{stream.getTracks().forEach(t=>t.stop());playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO'}
 }
 function updateTime(){let o=document.querySelector('#time');if(o)o.textContent=(frame/fps).toFixed(2)+' / '+duration.toFixed(2);let s=document.querySelector('#scrub');if(s)s.value=frame}
-function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%(duration*fps);updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/600);document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/600,scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
+function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%(duration*fps);updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/(duration*fps));document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/(duration*fps),scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
 shell();requestAnimationFrame(tick);
