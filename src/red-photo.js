@@ -36,23 +36,24 @@ export function renderRedPhoto(ctx,w,h,phase,s,p,highlight){
  const zoom=1.05+Math.max(0,p.smear||0)*.65;
  const cover=Math.max(w/src.width,h/src.height)*zoom;
  const sourceW=w/cover,sourceH=h/cover;
- const drift=(p.glitch||0)*.18;
- const motion=.5-.5*Math.cos(TAU*t);
+ // Every 3 seconds the composition gently separates and returns, with no abrupt shutters.
+ const cycle=((t*30/3)%1+1)%1;
+ const motion=.5-.5*Math.cos(TAU*cycle);
+ const ease=motion*motion*(3-2*motion);
  const lineWidth=Math.max(1,h*.004);
  ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();
  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
   const id=row*cols+col,seed=hash(id+2);
   // Black cells alternate with visible image. A few shutter cells appear and disappear periodically.
-  if(seed<.20 || (seed<.31&&Math.sin(TAU*t+id*1.8)>0.3))continue;
+  if(seed<.20)continue;
   const x=col*cw,y=row*ch;
-  const phaseShift=Math.sin(TAU*t+(id%7)*.9);
-  const offsetX=(hash(id+61)-.5)*sourceW*.19*motion + phaseShift*sourceW*drift;
-  const offsetY=(hash(id+97)-.5)*sourceH*.20*motion;
+  const offsetX=(hash(id+61)-.5)*sourceW*.24*ease*(.5+(p.glitch||0));
+  const offsetY=(hash(id+97)-.5)*sourceH*.28*ease;
   const sx=Math.max(0,Math.min(src.width-sourceW,src.width/2-sourceW/2+((col+.5)/cols-.5)*sourceW+offsetX));
   const sy=Math.max(0,Math.min(src.height-sourceH,src.height/2-sourceH/2+((row+.5)/rows-.5)*sourceH+offsetY));
   const sw=Math.max(1,sourceW/cols),sh=Math.max(1,sourceH/rows);
   const cx=Math.max(0,Math.min(src.width-sw,sx)),cy=Math.max(0,Math.min(src.height-sh,sy));
-  const shiftX=Math.sin(TAU*t+id*1.4)*cw*.20*(p.smear||.35);
+  const shiftX=(hash(id+143)-.5)*cw*.8*ease*(.35+(p.smear||0));
   ctx.drawImage(src,cx,cy,sw,sh,x+shiftX,y,cw+1,ch+1);
  }
  // Stable editorial grid above moving photograph.
