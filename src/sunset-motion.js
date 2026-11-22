@@ -14,7 +14,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
  case 0:{
-  const r=h*.54*s;
+  const r=h*.82*s;
   // One slow crossing per full loop. The sun starts and ends fully outside the frame.
   const x=-r*1.15+(w+r*2.3)*t;
   const y=h*(.9-.57*Math.sin(Math.PI*t));
@@ -26,7 +26,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  case 1:{
   const step=h*.9/mult,shift=.5*step*Math.sin(a);
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
-   const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.31:.26)*s;
+   const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.48:.41)*s;
    bandSun(c,x,y,r,i%3===0?pink:fg,bg);
   }
   // A flat, screenprinted sea: layered wave contours travel slowly in opposite directions.
@@ -54,7 +54,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
   for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
    const x=w*.5+(i-(cols-1)/2)*(w/(cols-1))*bloom;
    const y=h*.5+(j-1)*h*.29*bloom;
-   const r=h*(.28-.18*bloom)*s;
+   const r=h*(.46-.28*bloom)*s;
    disc(c,x,y,r,(i+j)%3===0?pink:(i+j)%3===1?red:fg);
   }break;
  }
