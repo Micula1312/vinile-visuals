@@ -82,15 +82,37 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    }
   }break;
  }
- // 06: heat haze, rippling flat color strips with travelling vertical waves.
+ // 06: PIXEL STEPS — animated mosaic staircase, no wave geometry.
  case 5:{
-  const bands=[orange,red,pink,ivory,black];
-  for(let j=0;j<11*mult;j++){
-   const y=j*h/(11*mult);
-   c.beginPath();c.moveTo(0,y);
-   for(let x=0;x<=w+w/170;x+=w/170)c.lineTo(x,y+h*.055*s*Math.sin(x/w*TAU*5*mult+a+j*.65));
-   c.lineTo(w,y+h/(11*mult)+h*.1*s);c.lineTo(0,y+h/11+h*.1);c.closePath();c.fillStyle=bands[j%bands.length];c.fill();
-  }break;
+  const cols=Math.max(12,Math.round((26+mult*8)/Math.max(.55,s)));
+  const cell=w/cols;
+  const rows=Math.max(5,Math.ceil(h/cell));
+  const cw=w/cols,ch=h/rows;
+  const inks=[orange,red,pink,ivory,fg];
+  // Quantized staircase silhouettes shift between columns over a seamless phase cycle.
+  const shift=Math.sin(a)*2.5;
+  for(let row=0;row<rows;row++){
+   for(let col=0;col<cols;col++){
+    const staircase=Math.floor((col+shift+Math.sin(row*.85+a)*2.4)/3);
+    const diagonal=Math.floor((col+row*2+Math.cos(a+col*.18)*2)/5);
+    const index=((staircase+diagonal+row)%inks.length+inks.length)%inks.length;
+    const lit=((col+row*3+Math.floor(2*Math.sin(a+row*.45)))%11+11)%11;
+    if(lit===0)continue;
+    c.fillStyle=inks[index];
+    c.fillRect(col*cw,row*ch,Math.ceil(cw+.25),Math.ceil(ch+.25));
+   }
+  }
+  // Broad stepped terraces cut through the mosaic, with crisp pixel edges.
+  c.fillStyle=bg;
+  for(let k=0;k<3;k++){
+   const base=Math.floor((rows*.2+k*rows*.27+Math.sin(a+k*1.8)*rows*.08));
+   for(let col=0;col<cols;col++){
+    const level=Math.floor((col+Math.sin(a+k)*2)/(3+k));
+    const row=base+level;
+    if(row>=0&&row<rows)c.fillRect(col*cw,row*ch,Math.ceil(cw+.25),Math.ceil(ch+.25));
+   }
+  }
+  break;
  }
  // 07: flowing ribbons, not suns or circles; each ribbon undulates independently.
  case 6:{
