@@ -1,11 +1,11 @@
-// SUNSET STUDIES — ten procedural, seamless, flat-ink motion scores.
+// SUNSET STUDIES — ten seamless, retro 1970s airbrush and screenprint motion scores.
 // Coordinates are normalized to the canvas height; every animation is periodic.
 const TAU=Math.PI*2;
 const wrap=(x,n)=>((x%n)+n)%n;
 const wave=(t,offset=0)=>Math.sin(TAU*t+offset);
 const disc=(c,x,y,r,color)=>{c.fillStyle=color;c.beginPath();c.arc(x,y,Math.max(.1,r),0,TAU);c.fill()};
 const rect=(c,x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(x,y,w,h)};
-const bandSun=(c,x,y,r,ink,cut)=>{disc(c,x,y,r,ink);c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();for(let k=0;k<5;k++)rect(c,x-r,y+r*(.12+k*.27),2*r,r*.065,cut);c.restore()};
+const bandSun=(c,x,y,r,ink,cut)=>{disc(c,x,y,r,ink);c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();for(let k=0;k<4;k++){const yy=y+r*(.10+k*.29),thick=r*(.045+k*.018);rect(c,x-r,yy,2*r,thick,cut)}c.restore()};
 export function renderSunset(c,w,h,phase,scene,params,P){
  const v=scene.variant, bg=scene.colors[0],fg=scene.colors[1],s=params.scale||1;
  const mult=Math.max(1,Math.round(params.multiply||1));
@@ -29,22 +29,25 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.48:.41)*s;
    bandSun(c,x,y,r,i%3===0?pink:fg,bg);
   }
-  // A flat, screenprinted sea: layered wave contours travel slowly in opposite directions.
-  // All offsets use whole-number cycles, so the 20-second loop closes seamlessly.
+  // Vintage 1970s airbrush poster: broad receding bands, not hairline vector waves.
   const seaTop=h*.69;
   rect(c,0,seaTop,w,h-seaTop,black);
-  for(let row=0;row<6;row++){
-   const base=seaTop+h*(.025+row*.049);
-   const amplitude=h*(.009+row*.002);
-   const wavelength=h*(1.7+row*.38);
-   const direction=row%2===0?1:-1;
-   const ink=[fg,pink,orange,fg,pink,orange][row];
+  const bands=9;
+  for(let row=0;row<bands;row++){
+   const depth=row/(bands-1),base=seaTop+h*(.025+Math.pow(depth,1.55)*.29);
+   const thick=h*(.014+depth*.027),amplitude=h*(.002+depth*.006);
+   const wavelength=h*(2.8+row*.4);
+   const ink=[orange,pink,fg,orange,fg,pink,orange,fg,orange][row];
    c.beginPath();
-   for(let x=0;x<=w+h*.03;x+=Math.max(3,h*.015)){
-    const y=base+amplitude*Math.sin(TAU*(x/wavelength+direction*t)+row*.8);
-    if(x===0)c.moveTo(x,y);else c.lineTo(x,y);
+   for(let x=0;x<=w+h*.03;x+=Math.max(4,h*.018)){
+    const yy=base+amplitude*Math.sin(TAU*(x/wavelength+(row%2?1:-1)*t)+row*.45);
+    if(x===0)c.moveTo(x,yy);else c.lineTo(x,yy);
    }
-   c.strokeStyle=ink;c.lineWidth=h*(row%3===0?.009:.006);c.stroke();
+   for(let x=w+h*.03;x>=0;x-=Math.max(4,h*.018)){
+    const yy=base+amplitude*Math.sin(TAU*(x/wavelength+(row%2?1:-1)*t)+row*.45)+thick;
+    c.lineTo(x,yy);
+   }
+   c.closePath();c.fillStyle=ink;c.globalAlpha=.64+depth*.25;c.fill();c.globalAlpha=1;
   }
   break;
  }
@@ -140,7 +143,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    const base=h*(.13+(j+.5)*.75/ribbons);
    const amplitude=h*(.035+.017*(j%3))*s;
    const wavelength=h*(1.4+(j%4)*.6);
-   const thickness=h*(.018+.009*(j%3))*s;
+   const thickness=h*(.055+.022*(j%3))*s;
    const direction=j%2?-1:1;
    c.beginPath();
    for(let x=0;x<=w+step;x+=step){
@@ -169,8 +172,8 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    const y=cy+h*.07*Math.cos(a*(1+i%2)+seed);
    const outer=h*(.19+.045*(i%3))*s;
    // Concentric ink rings form a moire-like solar disc, with independent centers.
-   for(let j=10;j>=0;j--){
-    const radius=outer*(j+1)/11;
+   for(let j=6;j>=0;j--){
+    const radius=outer*(j+1)/7;
     const ox=h*.025*Math.sin(a*(1+j%3)+seed+j*.32);
     const oy=h*.025*Math.cos(a*(1+j%2)+seed-j*.25);
     disc(c,x+ox,y+oy,radius,j%4===0?pink:j%2===0?orange:fg);
@@ -195,8 +198,8 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  case 9:{
   const centers=2+mult;
   const maxR=Math.hypot(w,h);
-  const gap=h*(.072/(Math.sqrt(mult)))*s;
-  const line=h*.012*s;
+  const gap=h*(.12/(Math.sqrt(mult)))*s;
+  const line=h*.035*s;
   for(let i=0;i<centers;i++){
    const seed=i*1.9;
    const cx=w*(i+.5)/centers+h*.055*Math.sin(a*(1+i%2)+seed);
