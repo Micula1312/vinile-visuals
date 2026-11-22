@@ -12,7 +12,7 @@ const families=[['sunset','SUNSET STUDIES','Golden-hour discs, horizons, optical
 const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.black,P.ivory],[P.black,P.blue],[P.black,P.violet],[P.black,P.blue],[P.black,P.violet],[P.black,P.violet],[P.black,P.red]][fi]})));
 const redTitles=['EYE CONTACT','FACE MELT','KISS KISS','BON APPÉTIT','TOUCH ME','BODY LANGUAGE','BAD RECEPTION','MIRROR MIRROR','TOO CLOSE','THE END?'];
 for(const scene of scenes.filter(s=>s.family==='red'))scene.name='RED PASSION / '+String(scene.variant+1).padStart(2,'0')+' — '+redTitles[scene.variant];
-const defaultHighlights={sunset:P.pink,night:P.blue,body:P.violet,type:P.blue,liquid:P.violet,optical:P.violet,red:P.red};
+const defaultHighlights={sunset:P.red,night:P.red,body:P.red,type:P.red,liquid:P.red,optical:P.red,red:P.red};
 const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
 const defaultParams={scale:1,speed:1,dither:0,blur:.08,distort:.55,frequency:1,multiply:1,copies:1,copiesY:1,pulse:0,drift:0,cameraDepth:0,rotationX:.15,rotationY:.25,perspective:48,geometryDensity:1,pixelSize:8,threshold:.5,smear:0,glitch:0,redZoom:1,sunsetGrain:.25,sunsetGlow:.42,sunsetBlur:.08,sunsetBlackLift:0,sunsetGradient:0,sunsetHalation:0,typeGrain:0,typeGlow:0,typeBlur:0,typeBlackLift:0,typeGradient:0,typeHalation:0};
