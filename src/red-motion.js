@@ -31,7 +31,7 @@ export async function loadRedGif(file,id){
 }
 const scratch=document.createElement('canvas');
 export function renderRed(c,w,h,phase,s,p,P){
- const asset=clips.get(s.id)||sharedAsset,bg=s.colors[0],red=s.colors[1],dark=P.black,ivory=P.ivory;
+ const asset=clips.get(s.id)||sharedAsset,bg=s.colors[0],red=s.colors[1],dark=bg,ivory=P.ivory;
  c.fillStyle=bg;c.fillRect(0,0,w,h);
  if(!asset){
   c.save();c.fillStyle=red;c.textAlign='center';c.font=Math.max(12,Math.round(h*.055))+'px monospace';
