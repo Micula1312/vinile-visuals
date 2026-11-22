@@ -17,7 +17,7 @@ const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
 const defaultParams={scale:1,speed:1,dither:0,blur:.08,distort:.55,frequency:1,multiply:1,copies:1,copiesY:1,pulse:0,drift:0,cameraDepth:0,rotationX:.15,rotationY:.25,perspective:48,geometryDensity:1,pixelSize:8,threshold:.5,smear:0,glitch:0,redZoom:1,sunsetGrain:.28,sunsetGlow:.42,sunsetBlur:.08};
 const defaultResolution={w:2304,h:512};
-const app=document.querySelector('#app');let autoParams={},selected=scenes[0],playing=true,frame=0,last=0,params={...defaultParams},resolution={w:2304,h:512},duration=30,fps=30,quality=16;
+const app=document.querySelector('#app');let autoParams={},selected=scenes[0],playing=true,frame=0,last=0,params={...defaultParams},resolution={w:2304,h:512},duration=30,fps=30,quality=16,exporting=false;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const autoRanges={sunsetGrain:[0,1],sunsetGlow:[0,1],sunsetBlur:[0,1],scale:[.3,1.8],speed:[1,24],dither:[0,1],copies:[1,8],copiesY:[1,8],pulse:[0,1],drift:[0,1],pixelSize:[2,40],threshold:[0,1],smear:[0,1],glitch:[0,1],redZoom:[1,8],blur:[.005,.35],distort:[0,2],frequency:[.2,4],cameraDepth:[-3,3],rotationX:[-3.14,3.14],rotationY:[-3.14,3.14],perspective:[20,100],geometryDensity:[1,5],multiply:[1,5]};
 const discreteParams=new Set(['speed','copies','copiesY','pixelSize','geometryDensity','multiply']);
@@ -100,7 +100,7 @@ async function exportVideo(){
  const ctx=cv.getContext('2d',{alpha:false});
  if(!ctx){status.textContent='Cannot create export canvas';return}
  let stream=null,recorder=null,chunks=[],wasPlaying=playing;
- button.disabled=true;button.textContent='RENDERING…';playing=false;
+ button.disabled=true;button.textContent='RENDERING…';playing=false;exporting=true;
  try{
   // Draw before recording: some browsers reject a zero-frame canvas stream.
   render(ctx,snapshot.width,snapshot.height,0,snapshot.scene,snapshot.params,snapshot.autoParams);
@@ -116,16 +116,17 @@ async function exportVideo(){
    recorder.onerror=e=>reject(e.error||new Error('Encoder error'));
    recorder.onstop=resolve;
   });
-  recorder.start(1000);
+  recorder.start(500);
   const total=snapshot.duration*snapshot.fps,delay=1000/snapshot.fps;
   let next=performance.now();
   for(let i=0;i<total;i++){
    if(recorder.state!=='recording')throw Error('Recorder stopped unexpectedly');
    render(ctx,snapshot.width,snapshot.height,i/total,snapshot.scene,snapshot.params,snapshot.autoParams);
    if(manual)track.requestFrame();
+   // Yield to the encoder even if rendering takes longer than a frame interval.
    if(i%10===0)status.textContent='Encoding '+(i+1)+' / '+total+' frames ('+Math.round((i+1)/total*100)+'%)';
    next+=delay;
-   await new Promise(resolve=>setTimeout(resolve,Math.max(0,next-performance.now())));
+   await new Promise(resolve=>setTimeout(resolve,Math.max(1,next-performance.now())));
   }
   recorder.stop();await completed;
   const blob=new Blob(chunks,{type:mime});
@@ -137,12 +138,12 @@ async function exportVideo(){
   setTimeout(()=>URL.revokeObjectURL(url),60000);
   status.textContent='Export complete: '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'. Check playback before Resolume.';
  }catch(err){
-  if(recorder?.state==='recording')recorder.stop();
+  if(recorder?.state==='recording'){try{recorder.stop()}catch(_){}}
   console.error('VINILE video export failed',err);
   status.textContent='Export failed: '+(err?.message||String(err));
  }finally{
   stream?.getTracks().forEach(t=>t.stop());
-  playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO';
+  exporting=false;playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO';
  }
 }
 function updateTime(){
@@ -153,5 +154,5 @@ function updateTime(){
   if(output&&Number.isFinite(effective[key]))output.textContent=effective[key].toFixed(discreteParams.has(key)?0:2)+' ↻';
  }
  let o=document.querySelector('#time');if(o)o.textContent=(frame/fps).toFixed(2)+' / '+duration.toFixed(2);let s=document.querySelector('#scrub');if(s)s.value=frame}
-function tick(now){if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%(duration*fps);updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/(duration*fps));document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/(duration*fps),scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
+function tick(now){if(exporting){last=now;requestAnimationFrame(tick);return}if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%(duration*fps);updateTime()}let preview=document.querySelector('#preview');if(preview)render(preview.getContext('2d'),preview.width,preview.height,frame/(duration*fps));document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/(duration*fps),scenes[i*10],{scale:1,speed:1,dither:.22}));requestAnimationFrame(tick)}
 shell();requestAnimationFrame(tick);
