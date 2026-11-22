@@ -7,7 +7,7 @@ const seed=n=>{const x=Math.sin(n*127.1+78.233)*43758.5453;return x-Math.floor(x
 function mat(hex,emissive=1,wire=false,opacity=1){
  return new THREE.MeshStandardMaterial({color:hex,emissive:hex,emissiveIntensity:emissive,metalness:.6,roughness:.24,wireframe:wire,transparent:opacity<1,opacity,side:THREE.DoubleSide,depthWrite:opacity===1});
 }
-function add(geo,m,x=0,y=0,z=0){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);root.add(o);actors.push(o);return o}
+function add(geo,m,x=0,y=0,z=0){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;root.add(o);actors.push(o);return o}
 function line(points,color,opacity=.8){
  const g=new THREE.BufferGeometry().setFromPoints(points);
  const o=new THREE.Line(g,new THREE.LineBasicMaterial({color,transparent:true,opacity}));
@@ -23,11 +23,13 @@ function setup(){
  const canvas=document.createElement('canvas');
  renderer=new THREE.WebGLRenderer({canvas,alpha:false,antialias:true,preserveDrawingBuffer:true,powerPreference:'default'});
  renderer.setPixelRatio(1);renderer.outputColorSpace=THREE.SRGBColorSpace;
- renderer.toneMapping=THREE.NoToneMapping;
+ renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;
+ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  scene=new THREE.Scene();
  camera=new THREE.PerspectiveCamera(55,4.5,.05,180);
- scene.add(new THREE.AmbientLight(0xffffff,.6));
- const l=new THREE.PointLight(0xffffff,25,30);l.position.set(1,4,6);scene.add(l);
+ scene.add(new THREE.AmbientLight(0xffffff,.18));
+ const l=new THREE.DirectionalLight(0xffffff,3.2);l.position.set(-4,9,8);l.castShadow=true;l.shadow.mapSize.set(1024,1024);l.shadow.camera.left=-16;l.shadow.camera.right=16;l.shadow.camera.top=12;l.shadow.camera.bottom=-12;l.shadow.camera.near=.5;l.shadow.camera.far=55;l.shadow.bias=-.0003;scene.add(l);
+ const rim=new THREE.PointLight(0xffffff,45,35);rim.position.set(7,2,-9);scene.add(rim);
  root=new THREE.Group();scene.add(root);
 }
 function clear(){
@@ -40,20 +42,39 @@ function build(v,fg,accent,bg,density){
  const n=Math.max(1,density);
  const primary=mat(fg,1.2),secondary=mat(accent,1.5),dim=mat(fg,.35,true,.35);
  const floor=mat(fg,.2,true,.3);
- // 01 / CYBER BASILICA — vaulted ribs, columns and a deep vanishing point.
+ // 01 / CHROMATIC OBJECT FIELD — physical sculpture gallery inspired by batched 3D objects.
  if(v===0){
-  for(let k=0;k<18+n*5;k++){
-   const z=-k*1.55;
-   for(let side of [-1,1]){
-    add(new THREE.BoxGeometry(.07,3.6,.08),k%4===0?secondary:primary,side*2.65,-.5,z);
-    const pts=[];for(let j=0;j<=24;j++){const a=j/24*Math.PI;pts.push(new THREE.Vector3(side*2.65+side*Math.sin(a)*.0,1.3+Math.sin(a)*1.6,z))}
-    // curved vault spans both walls
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(90,95),new THREE.MeshStandardMaterial({color:bg,metalness:.12,roughness:.74}));
+  ground.rotation.x=-Math.PI/2;ground.position.set(0,-2.3,-16);ground.receiveShadow=true;root.add(ground);actors.push(ground);
+  const knot=new THREE.TorusKnotGeometry(.44,.16,96,12,2,3);
+  const ball=new THREE.IcosahedronGeometry(.57,1);
+  const block=new THREE.OctahedronGeometry(.62,0);
+  const geometries=[knot,ball,block];
+  const palette=[fg,accent,'#FF481C','#F5EFE5'];
+  for(let shape=0;shape<3;shape++){
+   const count=(shape===0?30:45)*n;
+   const material=new THREE.MeshStandardMaterial({color:0xffffff,metalness:.72,roughness:.24});
+   const batch=new THREE.InstancedMesh(geometries[shape],material,count);
+   batch.castShadow=true;batch.receiveShadow=true;
+   const matrix=new THREE.Matrix4(),q=new THREE.Quaternion(),pos=new THREE.Vector3(),scale=new THREE.Vector3();
+   for(let i=0;i<count;i++){
+    const idx=i+shape*400;
+    const z=2-seed(idx+5)*35;
+    const x=(seed(idx+17)-.5)*13;
+    const y=-1.35+seed(idx+33)*4.8;
+    pos.set(x,y,z);
+    q.setFromEuler(new THREE.Euler(seed(idx+1)*TAU,seed(idx+2)*TAU,seed(idx+3)*TAU));
+    const k=.45+seed(idx+7)*1.25;scale.setScalar(k);
+    matrix.compose(pos,q,scale);batch.setMatrixAt(i,matrix);
+    batch.setColorAt(i,new THREE.Color(palette[idx%palette.length]));
    }
-   const arch=[];for(let j=0;j<=40;j++){const a=j/40*Math.PI;arch.push(new THREE.Vector3(Math.cos(a)*2.65,1.2+Math.sin(a)*1.85,z))}
-   tube(arch,.025,k%4===0?accent:fg,.85);
-   add(new THREE.BoxGeometry(5.4,.035,.04),dim,0,-2.28,z);
+   batch.instanceMatrix.needsUpdate=true;root.add(batch);actors.push(batch);
   }
-  for(let side of [-1,1])for(let k=0;k<12;k++)line([new THREE.Vector3(side*(.3+k*.2),-2.28,2),new THREE.Vector3(side*(.3+k*.2),-2.28,-33)],fg,.28);
+  for(let i=0;i<11;i++){
+   const z=1-i*3.5;
+   const pedestal=add(new THREE.CylinderGeometry(.65,.85,.28,8),mat(i%2?fg:accent,.08),((i%3)-1)*3,-2.13,z);
+   pedestal.castShadow=true;
+  }
  }
  // 02 / QUANTUM PASSAGE — portal frames, luminous rails and depth fog.
  if(v===1){
@@ -166,6 +187,7 @@ export function renderNight(c,w,h,phase,s,p,P){
   root.rotation.set((p.rotationX??.15)*.25+Math.sin(t)*.035,(p.rotationY??.25)*.25+Math.sin(t)*.045,0);
   const travel=(.5-.5*Math.cos(t))*2;
   if(v===3){const o=actors.find(x=>x.userData?.wave);if(o){const pos=o.geometry.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,.28*Math.sin(x*.9+Math.sin(t)*.4+z*.28)*Math.cos(z*.5+Math.cos(t)*.5))}pos.needsUpdate=true}}
+  if(v===0){root.rotation.y=Math.sin(t)*.045;root.position.x=Math.sin(t)*.35;}
   if(v===5)root.rotation.z=Math.sin(t)*.25;
   if(v===9)root.rotation.z=Math.sin(t)*.15;
   const depth=p.cameraDepth||0;
