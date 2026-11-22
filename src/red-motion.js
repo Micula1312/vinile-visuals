@@ -90,52 +90,49 @@ export function renderRed(c,w,h,phase,s,p,P){
    const offset=(.08+smear*.55)*w*stagger*breath;
    draw(0,sy,sw,rh,offset,sy*h/sh,w,rh*h/sh+1);
   }
- }else if(v===2){ // 03 / BITMAP PANIC: coarse expanding pixel-block collage.
-  full();
-  const blocks=12+Math.round(25*glitch);
-  for(let j=0;j<blocks;j++){
-   const u=(j*.61803398875)%1,q=(j*.754877666+.17)%1;
-   const bw=Math.max(1,Math.floor(sw*(.025+.09*breath))),bh=Math.max(1,Math.floor(sh*(.05+.13*breath)));
-   const sx=Math.floor(u*(sw-bw)),sy=Math.floor(q*(sh-bh));
-   const size=(.05+.17*breath)*h;
-   draw(sx,sy,bw,bh,u*w+Math.sin(TAU*t+j)*w*.04,q*h,size*1.4,size);
+ }else if(v===2){ // 03 / KISS KISS — repeating animated mouth-height slices, pop-trash contact strip
+  const rows=2+Math.round(glitch*5);
+  const sliceY=Math.floor(sh*.43),sliceH=Math.max(1,Math.floor(sh*.24));
+  for(let j=0;j<rows;j++){
+   const y=j*h/rows,shift=Math.sin(TAU*t+j*1.6)*w*.07;
+   draw(0,sliceY,sw,sliceH,shift,y,w,h/rows+1);
   }
- }else if(v===3){ // 04 / GHOST FRAMES: repeated offset portrait panels.
-  const count=3+Math.round(glitch*5);
+  c.fillStyle=red;
+  for(let j=0;j<rows;j++)c.fillRect(0,(j+1)*h/rows-h*.008,w,h*.008);
+ }else if(v===3){ // 04 / BON APPÉTIT — editorial dinner-table contact sheet / cutlery-like vertical bars
+  const cols=7;
+  for(let j=0;j<cols;j++){
+   const width=w/cols,scale=.65+.35*(.5+.5*Math.sin(TAU*t+j*.9));
+   const inset=(1-scale)*h/2;
+   draw(Math.floor(j*sw/cols),0,Math.max(1,Math.ceil(sw/cols)),sh,j*width,inset,width+1,h*scale);
+  }
+  c.fillStyle=red;
+  for(let j=1;j<cols;j++)c.fillRect(j*w/cols-h*.006,0,h*.012,h);
+ }else if(v===4){ // 05 / TOUCH ME — paired mirrored close-up gestures
+  const count=4;
   for(let j=0;j<count;j++){
-   const x=j*w/count;
-   const phaseShift=j/count*TAU;
-   const slide=Math.sin(TAU*t+phaseShift)*h*.12;
-   const crop=Math.floor(j*sw/count);
-   draw(crop,0,Math.max(1,Math.floor(sw/count)),sh,x+slide,0,w/count,h);
+   const x=j*w/count,shift=Math.sin(TAU*t+j*Math.PI/2)*h*.15;
+   c.save();c.translate(x+w/count/2+shift,h/2);
+   if(j%2)c.scale(-1,1);
+   draw(0,0,sw,sh,-w/count/2,-h/2,w/count,h);
+   c.restore();
   }
- }else if(v===4){ // 05 / SIGNAL BLEED: discontinuous VHS-like scan bands.
+ }else if(v===5){ // 06 / BODY LANGUAGE — silhouettes in staggered choreography
+  const cols=6;
+  for(let j=0;j<cols;j++){
+   const width=w/cols,beat=Math.sin(TAU*t+j*1.1);
+   const scale=.7+.3*(.5+.5*beat);
+   const offset=beat*h*.14;
+   draw(0,0,sw,sh,j*width,offset+(h-h*scale)/2,width+1,h*scale);
+  }
+ }else if(v===6){ // 07 / BAD RECEPTION — intermittent scan-line signal loss
   full();
-  const bands=30+Math.round(smear*70);
+  const bands=36+Math.round(smear*65);
   for(let j=0;j<bands;j++){
    if((j*7)%11>5)continue;
    const sy=Math.floor(j*sh/bands),rh=Math.max(1,Math.ceil(sh/bands));
    const offset=Math.sin(j*4.1+cyclic*3.5)*w*(.04+smear*.45);
    draw(0,sy,sw,rh,offset,sy*h/sh,w,rh*h/sh+1);
-  }
- }else if(v===5){ // 06 / RED OVERLOAD: oversized cropped fragments.
-  full();
-  const count=5+Math.round(glitch*10);
-  for(let j=0;j<count;j++){
-   const u=(j*.61803398875+.21)%1,q=(j*.41421356237+.12)%1;
-   const bw=Math.max(1,Math.floor(sw*.19)),bh=Math.max(1,Math.floor(sh*.28));
-   const sx=Math.floor(u*(sw-bw)),sy=Math.floor(q*(sh-bh));
-   const size=h*(.22+.38*breath);
-   const x=(u*w+cyclic*h*.18)%(w+size)-size*.4;
-   draw(sx,sy,bw,bh,x,q*h-size*.25,size,size);
-  }
- }else if(v===6){ // 07 / RED CURTAIN: animated vertical shutters.
-  const n=14+Math.round(smear*32);
-  for(let j=0;j<n;j++){
-   const sx=Math.floor(j*sw/n),rw=Math.max(1,Math.ceil(sw/n));
-   const x=j*w/n;
-   const stretch=.4+.6*(.5+.5*Math.cos(TAU*t+j*.38));
-   draw(sx,0,rw,sh,x,(h-h*stretch)/2,w/n+1,h*stretch);
   }
  }else if(v===7){ // 08 / MIRROR FEVER: kaleidoscopic mirrored fragments.
   const n=4+Math.round(glitch*4);
@@ -146,17 +143,20 @@ export function renderRed(c,w,h,phase,s,p,P){
    draw(0,0,sw,sh,-w/n/2,-h/2,w/n,h);
    c.restore();
   }
- }else if(v===8){ // 09 / CONTACT SHEET: cinematic tiled frames.
-  const cols=5,rows=2;
-  for(let j=0;j<cols*rows;j++){
-   const x=j%cols*w/cols,y=Math.floor(j/cols)*h/rows;
-   const inset=h*.018;
-   draw(0,0,sw,sh,x+inset,y+inset,w/cols-2*inset,h/rows-2*inset);
-  }
- }else{ // 10 / RED COLLAPSE: picture contracts into a giant central bitmap.
-  const size=.3+.7*breath;
-  const dw=w*size,dh=h*size;
-  full((w-dw)/2,(h-dh)/2,dw,dh);
+ }else if(v===8){ // 09 / TOO CLOSE — a single extreme crop, zooming out to full image
+  const zoom=1+5*breath;
+  const cw=Math.max(1,sw/zoom),ch=Math.max(1,sh/zoom);
+  const sx=(sw-cw)/2+Math.sin(TAU*t)*sw*.05,sy=(sh-ch)/2;
+  draw(clamp(sx,0,sw-cw),sy,cw,ch,0,0,w,h);
+ }else{ // 10 / THE END? — red curtain opening and closing around the figure
+  full();
+  const opening=.08+.85*breath;
+  c.fillStyle=red;
+  c.fillRect(0,0,w*(1-opening)/2,h);
+  c.fillRect(w*(1+opening)/2,0,w*(1-opening)/2,h);
+  c.fillStyle=bg;
+  c.fillRect(w*(1-opening)/2-h*.012,0,h*.012,h);
+  c.fillRect(w*(1+opening)/2,0,h*.012,h);
  }
  c.restore();
 }
