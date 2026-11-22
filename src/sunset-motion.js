@@ -58,16 +58,42 @@ export function renderSunset(c,w,h,phase,scene,params,P){
    disc(c,x,y,r,(i+j)%3===0?pink:(i+j)%3===1?red:fg);
   }break;
  }
- // 04: traveling constellation of dots, with staggered orbital drift and breathing scale.
+ // 04: CONSTELLATION BURSTS — orbital starfields and periodic firework blooms.
  case 3:{
-  const cols=Math.max(5,Math.round((w/h)*7*mult)),rows=3+Math.min(3,mult-1);
-  for(let row=0;row<rows;row++)for(let i=0;i<cols;i++){
-   const u=(i+.5+(row%2)*.5)/cols;
-   const x=u*w+h*.055*Math.sin(a+row*.7+i*.34);
-   const y=h*(.20+(row+.5)*.62/rows)+h*.07*Math.sin(a*(row%2?1:-1)+i*.42+row);
-   const radius=h*(.018+.015*(.5+.5*Math.cos(a+i*.71+row)))*s;
-   disc(c,x,y,radius,(i+row)%5===0?pink:(row%2?fg:orange));
-   if((i+row)%4===0)disc(c,x+h*.045*Math.sin(a+i),y+h*.035*Math.cos(a+row),radius*.38,ivory);
+  const TAU2=Math.PI*2;
+  const bursts=3+mult*2;
+  const stars=Math.round(48+mult*24);
+  // A deterministic starfield with slowly drifting points and twinkling.
+  for(let i=0;i<stars;i++){
+   const u=((i*0.61803398875+.13)%1),v=((i*.754877666+.37)%1);
+   const x=(u*w+h*.022*Math.sin(a+i*.73)+w)%w;
+   const y=v*h+h*.018*Math.cos(a+i*.51);
+   const pulse=.5+.5*Math.cos(a*2+i*1.71);
+   const radius=h*(.0018+.004*pulse)*s;
+   disc(c,x,y,radius,i%7===0?ivory:i%3===0?pink:fg);
+  }
+  // Firework clusters expand, contract and regenerate without a phase discontinuity.
+  for(let k=0;k<bursts;k++){
+   const u=((k*.61803398875+.23)%1),v=.2+((k*.41421356237+.16)%1)*.6;
+   const cx=u*w+h*.045*Math.sin(a+k*1.3);
+   const cy=v*h+h*.035*Math.cos(a+k*.87);
+   const phaseOffset=k/bursts;
+   const local=((t+phaseOffset)%1+1)%1;
+   const envelope=Math.sin(Math.PI*local)**2;
+   const spread=h*(.035+.18*local)*s;
+   const rays=12+Math.min(12,mult*3);
+   for(let j=0;j<rays;j++){
+    const angle=j/rays*TAU2+k*.9;
+    const distance=spread*(.6+.4*Math.sin(j*2.399+k)**2);
+    const px=cx+Math.cos(angle)*distance,py=cy+Math.sin(angle)*distance;
+    const radius=h*(.002+.007*envelope)*s;
+    disc(c,px,py,radius,j%5===0?ivory:j%3===0?pink:orange);
+    if(j%4===0){
+     const trail=.6+.15*Math.sin(a+j);
+     disc(c,cx+(px-cx)*trail,cy+(py-cy)*trail,radius*.5,fg);
+    }
+   }
+   disc(c,cx,cy,h*(.003+.009*(1-envelope))*s,ivory);
   }
   break;
  }
