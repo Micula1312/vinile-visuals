@@ -16,10 +16,10 @@ const app=document.querySelector('#app');let autoParams={},selected=scenes[0],pl
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const autoRanges={scale:[.3,1.8],speed:[1,24],dither:[0,1],copies:[1,8],copiesY:[1,8],pulse:[0,1],drift:[0,1],pixelSize:[2,40],threshold:[0,1],smear:[0,1],glitch:[0,1],redZoom:[1,8],blur:[.005,.35],distort:[0,2],frequency:[.2,4],cameraDepth:[-3,3],rotationX:[-3.14,3.14],rotationY:[-3.14,3.14],perspective:[20,100],geometryDensity:[1,5],multiply:[1,5]};
 const discreteParams=new Set(['speed','copies','copiesY','pixelSize','geometryDensity','multiply']);
-function animatedParams(p,phase){
- if(!Object.values(autoParams).some(Boolean))return p;
+function animatedParams(p,phase,flags=autoParams){
+ if(!Object.values(flags).some(Boolean))return p;
  const out={...p},wave=.5-.5*Math.cos(phase*Math.PI*2);
- for(const [key,enabled] of Object.entries(autoParams)){
+ for(const [key,enabled] of Object.entries(flags)){
   if(!enabled||!autoRanges[key])continue;
   const [lo,hi]=autoRanges[key],center=clamp(Number(p[key]??lo),lo,hi);
   // Symmetric movement around the user's current slider setting, returning to it at the loop boundary.
@@ -42,8 +42,8 @@ if(p.dither>0){c.save();c.globalAlpha=p.dither*.38;c.fillStyle=P.black;let step=
 // Universal composition layer: tile the entire procedural scene, with periodic pulse and drift.
 // One copy is a strict pass-through; no change to existing presets or export rendering.
 const compositionCanvas=document.createElement('canvas');
-function render(c,w,h,phase,s=selected,p=params){
- p=animatedParams(p,phase);
+function render(c,w,h,phase,s=selected,p=params,flags=autoParams){
+ p=animatedParams(p,phase,flags);
  const copies=Math.max(1,Math.round(p.copies||1)),copiesY=Math.max(1,Math.round(p.copiesY||1)),pulse=Math.max(0,p.pulse||0),drift=Math.max(0,p.drift||0);
  if(copies===1&&copiesY===1&&pulse===0&&drift===0){renderBase(c,w,h,phase,s,p);return}
  const source=compositionCanvas;
@@ -99,7 +99,7 @@ async function exportVideo(){
   const total=snapshot.duration*snapshot.fps;const delay=1000/snapshot.fps;let next=performance.now();
   for(let i=0;i<total;i++){
    if(recorder.state!=='recording')throw new Error('Recorder stopped unexpectedly');
-   render(ctx,snapshot.width,snapshot.height,i/total,snapshot.scene,snapshot.params);
+   render(ctx,snapshot.width,snapshot.height,i/total,snapshot.scene,snapshot.params,snapshot.autoParams);
    track.requestFrame();
    if(i%10===0)status.textContent='Encoding '+(i+1)+' / '+total+' frames ('+Math.round((i+1)/total*100)+'%)';
    next+=delay;await new Promise(resolve=>setTimeout(resolve,Math.max(0,next-performance.now())));
