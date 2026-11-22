@@ -92,34 +92,58 @@ document.querySelectorAll('.settings input[type="range"]').forEach(input=>{
 document.querySelectorAll('[data-highlight]').forEach(input=>input.onchange=e=>{const family=e.target.dataset.highlight;const old=highlights[family];const next=e.target.value;highlights[family]=next;for(const scene of scenes.filter(s=>s.family===family)){if(scene.colors[1].toLowerCase()===old.toLowerCase())scene.colors[1]=next}if(selected.family===family){const fg=document.querySelector('#fg');if(fg){let opt=Array.from(fg.options).find(o=>o.value.toLowerCase()===next.toLowerCase());if(!opt){opt=new Option('HIGHLIGHT',next);fg.add(opt)}fg.value=selected.colors[1]}}});if(selected.family==='red'&&selected.variant===1){document.querySelector('#photo-upload').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;const status=document.querySelector('#photo-status');status.textContent='Loading photo…';try{const asset=await loadRedPhoto(file);status.textContent=asset.name+' · animated B&W collage';frame=0}catch(err){status.textContent='Photo error: '+err.message}};}if(selected.family==='red'&&selected.variant===2){document.querySelector('#collage-upload').onchange=async e=>{const files=e.target.files;if(!files?.length)return;const status=document.querySelector('#collage-status');status.textContent='Processing photographs…';try{const count=await loadCollagePhotos(files);status.textContent=count+' photos ready · 3-second loop';frame=0}catch(err){status.textContent='Collage error: '+err.message}};}if(selected.family==='red'&&selected.variant!==1&&selected.variant!==2){document.querySelector('#gif-upload').onchange=async e=>{const file=e.target.files?.[0];if(!file)return;const status=document.querySelector('#gif-status');status.textContent='Decoding GIF…';try{const asset=await loadRedGif(file,selected.id);status.textContent=asset.name+' · '+asset.frames.length+' frames';frame=0}catch(err){status.textContent='GIF error: '+err.message}};}document.querySelectorAll('.scene').forEach(b=>b.onclick=()=>{selected=scenes.find(s=>s.id===b.dataset.id);studioPage()});document.querySelector('#play').onclick=()=>{playing=!playing;document.querySelector('#play').textContent=playing?'PAUSE':'PLAY'};document.querySelector('#scrub').oninput=e=>{frame=+e.target.value;playing=false;document.querySelector('#play').textContent='PLAY';updateTime()};for(let k of ['scale','speed','dither','copies','copiesY',...(selected.family==='red'?['pixelSize','threshold','smear','glitch','redZoom']:[]),'pulse','drift',...(selected.family==='sunset'?['multiply','sunsetGrain','sunsetGlow','sunsetBlur']:[]),...(selected.family==='optical'?['blur','distort','frequency']:[]),...(selected.family==='night'?['cameraDepth','rotationX','rotationY','perspective','geometryDensity']:[])])document.querySelector('#'+k).oninput=e=>{params[k]=+e.target.value;document.querySelector('#'+k+'-out').textContent=params[k].toFixed((k==='speed'||k==='multiply'||k==='copies'||k==='copiesY'||k==='geometryDensity')?0:2)};for(let [id,i] of [['bg',0],['fg',1]]){const picker=document.querySelector('#'+id+'-custom'),select=document.querySelector('#'+id);select.onchange=e=>{selected.colors[i]=e.target.value;picker.value=e.target.value};picker.oninput=e=>{selected.colors[i]=e.target.value;let option=Array.from(select.options).find(o=>o.value.toLowerCase()===e.target.value.toLowerCase());if(!option){option=Array.from(select.options).find(o=>o.dataset.custom==='true');if(!option){option=new Option('CUSTOM',e.target.value);option.dataset.custom='true';select.add(option)}option.value=e.target.value}select.value=e.target.value}};for(let [id,key] of [['width','w'],['height','h']])document.querySelector('#'+id).oninput=e=>{resolution[key]=clamp(+e.target.value||resolution[key],100,7680);const preview=document.querySelector('#preview');const factor=Math.min(1,1200/resolution.w);preview.width=Math.max(1,Math.round(resolution.w*factor));preview.height=Math.max(1,Math.round(resolution.h*factor));preview.style.aspectRatio=resolution.w+' / '+resolution.h};document.querySelector('#still').onclick=()=>{const cv=document.createElement('canvas');cv.width=resolution.w;cv.height=resolution.h;render(cv.getContext('2d'),cv.width,cv.height,frame/(duration*fps));cv.toBlob(blob=>{let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=selected.id+'-'+frame+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)})};document.querySelector('#duration').onchange=e=>{duration=clamp(Math.round(+e.target.value||30),1,180);e.target.value=duration;frame=0;document.querySelector('#scrub').max=duration*fps-1;document.querySelector('#loop-info').textContent=duration+' SEC / SEAMLESS';updateTime()};document.querySelector('#fps').onchange=e=>{fps=+e.target.value;frame=0;document.querySelector('#scrub').max=duration*fps-1;updateTime()};document.querySelector('#quality').onchange=e=>{quality=+e.target.value};document.querySelector('#reset-scene').onclick=()=>{selected.colors=[...originalSceneColors.get(selected.id)];params={...defaultParams};autoParams={};frame=0;studioPage()};document.querySelector('#reset-all').onclick=()=>{for(const family of Object.keys(highlights))highlights[family]=defaultHighlights[family];for(const scene of scenes)scene.colors=[...originalSceneColors.get(scene.id)];clearRedAssets();clearRedPhoto();clearCollagePhotos();params={...defaultParams};autoParams={};resolution={...defaultResolution};duration=30;fps=30;quality=16;frame=0;studioPage()};document.querySelector('#video').onclick=exportVideo;document.querySelector('#preset').onclick=()=>{let blob=new Blob([JSON.stringify({scene:selected,params,autoParams,resolution,duration,fps},null,2)],{type:'application/json'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=selected.id+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}}
 async function exportVideo(){
  const button=document.querySelector('#video'),status=document.querySelector('#export-status');
- if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){status.textContent='This browser does not support video recording. Try Chrome or Edge.';return}
+ if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){status.textContent='Video export needs Chrome or Edge with canvas recording support.';return}
  const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4;codecs=avc1.42E01E','video/mp4'].find(x=>MediaRecorder.isTypeSupported(x));
  if(!mime){status.textContent='No supported video codec found.';return}
  const snapshot={scene:{...selected,colors:[...selected.colors]},params:{...params},autoParams:{...autoParams},width:resolution.w,height:resolution.h,duration,fps,quality};
  const cv=document.createElement('canvas');cv.width=snapshot.width;cv.height=snapshot.height;
- const ctx=cv.getContext('2d',{alpha:false});const stream=cv.captureStream(0);const track=stream.getVideoTracks()[0];
- if(!track||typeof track.requestFrame!=='function'){stream.getTracks().forEach(t=>t.stop());status.textContent='Frame-accurate capture is unavailable in this browser.';return}
- let recorder,chunks=[];try{recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:snapshot.quality*1000000})}catch(err){stream.getTracks().forEach(t=>t.stop());status.textContent='Cannot start encoder: '+err.message;return}
- const wasPlaying=playing;playing=false;button.disabled=true;button.textContent='RENDERING…';status.textContent='Preparing '+snapshot.width+' × '+snapshot.height+' / '+snapshot.fps+' FPS';
- const completed=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onerror=e=>reject(e.error||new Error('Encoding error'));recorder.onstop=resolve});
+ const ctx=cv.getContext('2d',{alpha:false});
+ if(!ctx){status.textContent='Cannot create export canvas';return}
+ let stream=null,recorder=null,chunks=[],wasPlaying=playing;
+ button.disabled=true;button.textContent='RENDERING…';playing=false;
  try{
-  recorder.start();
-  // Real-time canvas capture ensures each requested frame is offered to MediaRecorder.
-  // Browser encoding can still drop frames under heavy load; inspect the result before delivery.
-  const total=snapshot.duration*snapshot.fps;const delay=1000/snapshot.fps;let next=performance.now();
+  // Draw before recording: some browsers reject a zero-frame canvas stream.
+  render(ctx,snapshot.width,snapshot.height,0,snapshot.scene,snapshot.params,snapshot.autoParams);
+  stream=cv.captureStream(0);
+  let track=stream.getVideoTracks()[0];
+  // Chrome may omit requestFrame on some GPU configurations. Fall back to a timed stream.
+  const manual=!!track&&typeof track.requestFrame==='function';
+  if(!manual){stream.getTracks().forEach(t=>t.stop());stream=cv.captureStream(snapshot.fps);track=stream.getVideoTracks()[0]}
+  if(!track)throw Error('No video track available from canvas');
+  recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:snapshot.quality*1000000});
+  const completed=new Promise((resolve,reject)=>{
+   recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+   recorder.onerror=e=>reject(e.error||new Error('Encoder error'));
+   recorder.onstop=resolve;
+  });
+  recorder.start(1000);
+  const total=snapshot.duration*snapshot.fps,delay=1000/snapshot.fps;
+  let next=performance.now();
   for(let i=0;i<total;i++){
-   if(recorder.state!=='recording')throw new Error('Recorder stopped unexpectedly');
+   if(recorder.state!=='recording')throw Error('Recorder stopped unexpectedly');
    render(ctx,snapshot.width,snapshot.height,i/total,snapshot.scene,snapshot.params,snapshot.autoParams);
-   track.requestFrame();
+   if(manual)track.requestFrame();
    if(i%10===0)status.textContent='Encoding '+(i+1)+' / '+total+' frames ('+Math.round((i+1)/total*100)+'%)';
-   next+=delay;await new Promise(resolve=>setTimeout(resolve,Math.max(0,next-performance.now())));
+   next+=delay;
+   await new Promise(resolve=>setTimeout(resolve,Math.max(0,next-performance.now())));
   }
   recorder.stop();await completed;
-  const blob=new Blob(chunks,{type:mime});if(!blob.size)throw new Error('Empty video file');
-  const ext=mime.startsWith('video/mp4')?'mp4':'webm';const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=snapshot.scene.id+'-'+snapshot.duration+'s-'+snapshot.fps+'fps-'+snapshot.width+'x'+snapshot.height+'.'+ext;a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
-  status.textContent='Export complete: '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'. Verify playback before using in Resolume.';
- }catch(err){if(recorder.state==='recording')recorder.stop();status.textContent='Export failed: '+err.message}
- finally{stream.getTracks().forEach(t=>t.stop());playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO'}
+  const blob=new Blob(chunks,{type:mime});
+  if(!blob.size)throw Error('Encoder returned an empty file');
+  const ext=mime.startsWith('video/mp4')?'mp4':'webm';
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=snapshot.scene.id+'-'+snapshot.duration+'s-'+snapshot.fps+'fps-'+snapshot.width+'x'+snapshot.height+'.'+ext;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+  status.textContent='Export complete: '+(blob.size/1048576).toFixed(1)+' MB · '+ext.toUpperCase()+'. Check playback before Resolume.';
+ }catch(err){
+  if(recorder?.state==='recording')recorder.stop();
+  console.error('VINILE video export failed',err);
+  status.textContent='Export failed: '+(err?.message||String(err));
+ }finally{
+  stream?.getTracks().forEach(t=>t.stop());
+  playing=wasPlaying;button.disabled=false;button.textContent='EXPORT VIDEO';
+ }
 }
 function updateTime(){
  const effective=animatedParams(params,frame/(duration*fps));
