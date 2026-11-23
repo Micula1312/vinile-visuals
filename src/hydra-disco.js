@@ -80,7 +80,7 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
   live={...p,phase,sceneId:scene.id,fg:scene.colors[1],bg:scene.colors[0],accent:palette.highlight,textCanvas};
   if(!hydra||key!==next){
    if(hydra){try{hydra.hush()}catch(_){}}
-   canvas=document.createElement('canvas');canvas.width=textCanvas.width;canvas.height=textCanvas.height;
+   canvas=document.createElement('canvas');canvas.width=scene.id==='body-001'?Math.min(1024,textCanvas.height*2):textCanvas.width;canvas.height=scene.id==='body-001'?canvas.width:textCanvas.height;
    hydra=new Hydra({canvas,detectAudio:false,makeGlobal:false,autoLoop:false,numSources:4,numOutputs:4});
    key=next;build(v);
   }
@@ -95,7 +95,11 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
    c.save();
    c.filter=blurPx>0.01?`blur(${blurPx.toFixed(2)}px)`:'none';
    const overscan=blurPx*2;
-   c.drawImage(canvas,-overscan,-overscan,w+overscan*2,h+overscan*2);
+   if(scene.id==='body-001'){
+    // Render square Hydra texture into a square region: true circular sun on panoramic output.
+    const side=h*1.75;
+    c.drawImage(canvas,(w-side)/2-overscan,(h-side)/2-overscan,side+overscan*2,side+overscan*2);
+   }else c.drawImage(canvas,-overscan,-overscan,w+overscan*2,h+overscan*2);
    c.restore();
   }else c.drawImage(canvas,0,0,w,h);
  }catch(err){
