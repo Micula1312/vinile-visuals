@@ -121,6 +121,21 @@ if(['sunset','type'].includes(selected.family)){
  document.getElementById('glass-molten')?.addEventListener('click',()=>setGlass({glassRefraction:.42,glassBloom:.62,glassSoftness:.22,glassChromatic:.14}));
  document.getElementById('glass-clear')?.addEventListener('click',()=>setGlass({glassRefraction:0,glassBloom:0,glassSoftness:0,glassChromatic:0}));
 }
+// Compact controls: show only the parameters relevant to the selected visual family.
+const visibleByFamily={
+ night:['customText','hydraAmount','hydraFrequency','hydraGlitch','hydraBeat','bpm','speed','bg','fg'],
+ sunset:['customText','scale','speed','multiply','sunsetGrain','sunsetGlow','sunsetBlur','sunsetBlackLift','sunsetGradient','sunsetHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
+ type:['customText','scale','speed','typeGrain','typeGlow','typeBlur','typeBlackLift','typeGradient','typeHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
+ red:['scale','speed','pixelSize','threshold','smear','glitch','redZoom','bg','fg'],
+ optical:['scale','speed','blur','distort','frequency','bg','fg'],
+ liquid:['scale','speed','bg','fg'],
+ body:['scale','speed','bg','fg']
+};
+const essential=new Set([...(visibleByFamily[selected.family]||['scale','speed','bg','fg']),'copies','copiesY','pulse','drift','dither']);
+document.querySelectorAll('.settings > .control').forEach(control=>{
+ const ids=[...control.querySelectorAll('input[id],select[id]')].map(el=>el.id);
+ if(ids.length && !ids.some(id=>essential.has(id)))control.hidden=true;
+});
 document.getElementById('hydra-editor-open')?.addEventListener('click',()=>openHydraEditor({scene:selected,params,preview:cv=>{const phase=frame/(duration*fps);render(cv.getContext('2d'),cv.width,cv.height,phase,selected,animatedParams(params,phase))}}));
 document.querySelectorAll('.settings input[type="range"]').forEach(input=>{
  const key=input.id;if(!autoRanges[key])return;
