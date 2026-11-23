@@ -22,10 +22,11 @@ function build(v){
  if(custom){
   const synth=hydra.synth;
   const names=['osc','shape','noise','voronoi','gradient','solid','src','o0','o1','o2','o3','s0','s1','s2','s3','render','hush'];
-  const param=(name,initial=0,min=0,max=1)=>{const n=Number(live['patch_'+name]??initial);return ()=>Math.max(Number(min),Math.min(Number(max),n))};
+  const param=(name,initial=0,min=0,max=1)=>()=>Math.max(Number(min),Math.min(Number(max),Number(live['patch_'+name]??initial)));
+  const readParam=(name,initial=0,min=0,max=1)=>param(name,initial,min,max)();
   // Explicit user-authored local scripts: JavaScript is powerful. Do not paste untrusted code.
   const run=new Function(...names,'param','bpm','palette','time', '"use strict";\n'+custom);
-  run(...names.map(n=>synth[n]),param,()=>Number(live.bpm||120),{background:live.bg,foreground:live.fg,highlight:live.accent},()=>Number(live.phase||0));
+  run(...names.map(n=>synth[n]),param,()=>Number(live.bpm||120),{background:live.bg,foreground:live.fg,highlight:live.accent},()=>Number(live.phase||0)*30);
   return;
  }
 
