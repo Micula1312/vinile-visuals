@@ -8,7 +8,7 @@ ${body}
 `;
 export const cenaStudies=[
  ['SOLAR CORE',`// Correct for the 2304x512 panoramic canvas: preserve circular proportions.
-const aspect=2304/512;
+const aspect=1; // Rendered in a square Hydra source to keep the solar disc round.
 const sun=()=>shape(99,.35,.20).scale(1,1/aspect,1)
   .modulate(noise(2.5,()=>tempo()*.016).scale(1,1/aspect,1),.055);
 const surface=()=>noise(5,()=>tempo()*.018)
