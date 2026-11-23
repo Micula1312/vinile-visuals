@@ -3,7 +3,7 @@
 // source code must be supplied before faithful ports can be made.
 import Hydra from 'hydra-synth';
 const TAU=Math.PI*2;
-let hydra=null,canvas=null,key='',live={};
+let hydra=null,canvas=null,key='',live={},textCanvas=null;
 const hexRgb=h=>{const v=h.replace('#','');const n=parseInt(v.length===3?v.split('').map(x=>x+x).join(''):v,16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]};
 const color=(src,rgb)=>src.color(...rgb);
 const val=(key,fallback)=>()=>Number(live[key]??fallback);
@@ -48,7 +48,7 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
  try{
   const v=scene.isText?9:scene.variant;
   const next=[v,w,h,scene.colors[0],scene.colors[1],palette.highlight].join('|');
-  const textCanvas=document.createElement('canvas');
+  if(!textCanvas)textCanvas=document.createElement('canvas');
   textCanvas.width=Math.max(2,Math.min(1536,w));textCanvas.height=Math.max(2,Math.round(h*textCanvas.width/w));
   const tc=textCanvas.getContext('2d');
   tc.clearRect(0,0,textCanvas.width,textCanvas.height);
