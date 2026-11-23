@@ -62,7 +62,6 @@ if(s.family==='sunset'){renderSunset(c,w,h,phase,s,p,palette);finishSunset(c,w,h
 if(s.family==='optical')renderOptical(c,w,h,phase,s,p,palette);
 if(s.family==='night'||s.family==='body')renderHydraDisco(c,w,h,phase,s,p,palette);
 if(s.family==='body')return;
-if(false){for(let i=-1;i<Math.ceil(w/(h*.95))+1;i++){let x=i*h*.95+(Math.sin(t+v)*h*.17),y=h*(.5+.07*Math.sin(t+i));c.beginPath();c.moveTo(x-h*.4,y);c.quadraticCurveTo(x,y-h*.34*S,x+h*.4,y);c.quadraticCurveTo(x,y+h*.34*S,x-h*.4,y);c.fillStyle=fg;c.fill();ellipse(c,x,y,h*.15*S,h*.15*S,P.black);ellipse(c,x,y,h*.045,h*.045,P.orange)}}
 if(s.family==='type'){renderAfterHours(c,w,h,phase,s,p,palette);finishSunset(c,w,h,{sunsetGrain:p.typeGrain,sunsetGlow:p.typeGlow,sunsetBlur:p.typeBlur,sunsetBlackLift:p.typeBlackLift,sunsetGradient:p.typeGradient,sunsetHalation:p.typeHalation},phase)}
 if(s.family==='liquid'){for(let k=0;k<4;k++){c.beginPath();c.moveTo(0,h);for(let x=0;x<=w+20;x+=Math.max(8,w/250)){let y=h*(.18+k*.19)+Math.sin(x/w*Math.PI*(3+v%4)+t+k*1.3)*h*.14*S+Math.cos(x/w*Math.PI*8-t+k)*h*.035;c.lineTo(x,y)}c.lineTo(w,h);c.closePath();c.fillStyle=[fg,P.orange,P.ivory,P.black][k];c.fill()}}
 if(p.dither>0){c.save();c.globalAlpha=p.dither*.38;c.fillStyle=P.black;let step=Math.max(6,Math.round(h/64));for(let y=0;y<h;y+=step)for(let x=(Math.floor(y/step)%2)*step;x<w;x+=step*2)c.fillRect(x,y,Math.max(1,step*.18),Math.max(1,step*.18));c.restore()}
