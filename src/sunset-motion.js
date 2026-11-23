@@ -48,46 +48,28 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 03: repeated suns emerge from a single location and dissolve into a grid.
  case 2:{
+  ambient(c,w,h,pink);
   const bloom=(1-Math.cos(a))*.5,cols=7+6*mult,rows=3;
   for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
-   const x=w*.5+(i-(cols-1)/2)*(w/(cols-1))*bloom;
-   const y=h*.5+(j-1)*h*.29*bloom;
-   const r=h*(.46-.28*bloom)*s;
-   disc(c,x,y,r,(i+j)%3===0?pink:(i+j)%3===1?red:fg);
+   const x=w*.5+(i-(cols-1)/2)*(w/(cols-1))*bloom,y=h*.5+(j-1)*h*.29*bloom;
+   c.save();c.globalAlpha=.78;gradientDisc(c,x,y,h*(.46-.28*bloom)*s,(i+j)%2?pink:red);c.restore();
   }break;
  }
+
  // 04: CONSTELLATION BURSTS — solid flat-ink circles only, no glows or trails.
  case 3:{
+  ambient(c,w,h,pink);
   const bursts=3+mult*2;
-  const stars=24+mult*12;
-  const inks=[fg,orange,pink,ivory];
-  // Sparse constellations: every dot is a clean, fully opaque palette disc.
-  for(let i=0;i<stars;i++){
-   const u=(i*.61803398875+.13)%1,v=(i*.754877666+.37)%1;
-   const x=(u*w+h*.028*Math.sin(a+i*.73)+w)%w;
-   const y=v*h+h*.025*Math.cos(a+i*.51);
-   const radius=h*(.005+.006*(.5+.5*Math.cos(a+i*1.71)))*s;
-   disc(c,x,y,radius,inks[i%inks.length]);
-  }
-  // Firework rosettes: crisp circles, discrete color blocks, periodic motion.
   for(let k=0;k<bursts;k++){
-   const cx=((k*.61803398875+.23)%1)*w+h*.045*Math.sin(a+k*1.3);
-   const cy=(.2+((k*.41421356237+.16)%1)*.6)*h+h*.035*Math.cos(a+k*.87);
-   const phaseOffset=k/bursts;
-   const local=wrap(t+phaseOffset,1);
-   const expansion=.5-.5*Math.cos(TAU*local);
-   const spread=h*(.045+.18*expansion)*s;
-   const rays=10+Math.min(12,mult*3);
-   for(let j=0;j<rays;j++){
-    const angle=j/rays*TAU+k*.9;
-    const distance=spread*(.65+.35*Math.sin(j*2.399+k)**2);
-    const radius=h*(.006+.009*(1-expansion*.55))*s;
-    disc(c,cx+Math.cos(angle)*distance,cy+Math.sin(angle)*distance,radius,inks[(j+k)%inks.length]);
-   }
-   disc(c,cx,cy,h*.013*s,inks[k%inks.length]);
-  }
-  break;
+   const seed=k*2.3999632297,x=((k*.61803398875+.23)%1)*w+h*.045*Math.sin(a+seed);
+   const y=(.2+((k*.41421356237+.16)%1)*.6)*h+h*.035*Math.cos(a+seed);
+   const radius=h*(.045+.16*(.5-.5*Math.cos(a+TAU*k/bursts)))*s;
+   c.save();c.globalAlpha=.18;gradientDisc(c,x,y,radius*1.75,pink);c.restore();
+   c.save();c.globalAlpha=.75;gradientDisc(c,x,y,radius,k%2?pink:red);c.restore();
+   c.save();c.globalAlpha=.32;gradientDisc(c,x-radius*.12,y-radius*.15,radius*.45,ivory);c.restore();
+  }break;
  }
+
  // 05: many horizontal light reflections sliding at different speeds.
  case 4:{
   ambient(c,w,h,pink);
@@ -107,36 +89,17 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 06: PIXEL STEPS — animated mosaic staircase, no wave geometry.
  case 5:{
-  const cols=Math.max(12,Math.round((26+mult*8)/Math.max(.55,s)));
-  const cell=w/cols;
-  const rows=Math.max(5,Math.ceil(h/cell));
-  const cw=w/cols,ch=h/rows;
-  const inks=[orange,red,pink,ivory,fg];
-  // Quantized staircase silhouettes shift between columns over a seamless phase cycle.
-  const shift=Math.sin(a)*2.5;
-  for(let row=0;row<rows;row++){
-   for(let col=0;col<cols;col++){
-    const staircase=Math.floor((col+shift+Math.sin(row*.85+a)*2.4)/3);
-    const diagonal=Math.floor((col+row*2+Math.cos(a+col*.18)*2)/5);
-    const index=((staircase+diagonal+row)%inks.length+inks.length)%inks.length;
-    const lit=((col+row*3+Math.floor(2*Math.sin(a+row*.45)))%11+11)%11;
-    if(lit===0)continue;
-    c.fillStyle=inks[index];
-    c.fillRect(col*cw,row*ch,Math.ceil(cw+.25),Math.ceil(ch+.25));
-   }
-  }
-  // Broad stepped terraces cut through the mosaic, with crisp pixel edges.
-  c.fillStyle=bg;
-  for(let k=0;k<3;k++){
-   const base=Math.floor((rows*.2+k*rows*.27+Math.sin(a+k*1.8)*rows*.08));
-   for(let col=0;col<cols;col++){
-    const level=Math.floor((col+Math.sin(a+k)*2)/(3+k));
-    const row=base+level;
-    if(row>=0&&row<rows)c.fillRect(col*cw,row*ch,Math.ceil(cw+.25),Math.ceil(ch+.25));
-   }
-  }
-  break;
+  ambient(c,w,h,pink);
+  const cols=Math.max(7,Math.round((12+mult*3)/Math.max(.65,s))),rows=5+Math.min(4,mult),cw=w/cols,ch=h/rows;
+  for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+   const intensity=.5+.5*Math.sin(a+col*.47+row*.83);
+   const step=Math.floor((col+row*.75+1.5*Math.sin(a+row*.6))/3);
+   if((step+row)%4===0)continue;
+   c.save();c.globalAlpha=.18+.55*intensity;c.fillStyle=airbrush(c,row*ch,(row+1)*ch,(col+row)%2?pink:red);
+   c.fillRect(col*cw,row*ch,cw+1,ch+1);c.restore();
+  }break;
  }
+
  // 07: flowing ribbons, not suns or circles; each ribbon undulates independently.
  case 6:{
   ambient(c,w,h,pink);
@@ -178,43 +141,31 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 09: sliding curtains of warm color, revealing new stripes at different rates.
  case 8:{
-  const colors=[orange,red,pink,ivory,black];
-  const step=w/(13*mult);
-  for(let i=-2;i<13*mult+3;i++){
-   const x=i*step+.5*step*Math.sin(a);
-   rect(c,x,0,step+1,h,colors[wrap(i,5)]);
-   const aperture=h*s*(.2+.55*(.5+.5*Math.sin(a+i*.85)));
-   rect(c,x+step*.25,0,step*.48,aperture,bg);
-   rect(c,x+step*.25,h-aperture*.55,step*.48,aperture*.55,fg);
+  ambient(c,w,h,pink);
+  const panels=5+Math.min(5,mult*2),step=w/panels;
+  for(let i=-1;i<=panels;i++){
+   const x=i*step+step*.2*Math.sin(a+i*.5);
+   const g=c.createLinearGradient(x,0,x+step*1.15,0);
+   g.addColorStop(0,'rgba(84,18,41,0)');
+   g.addColorStop(.42,i%2?'rgba(245,183,179,.6)':'rgba(230,0,35,.5)');
+   g.addColorStop(1,'rgba(84,18,41,0)');
+   c.fillStyle=g;c.fillRect(x,0,step*1.15,h);
   }break;
  }
+
  // 10: optical sunset — interlaced concentric wavefronts create a moving moire.
  case 9:{
+  ambient(c,w,h,pink);
   const centers=2+mult;
-  const maxR=Math.hypot(w,h);
-  const gap=h*(.12/(Math.sqrt(mult)))*s;
-  const line=h*.035*s;
   for(let i=0;i<centers;i++){
-   const seed=i*1.9;
-   const cx=w*(i+.5)/centers+h*.055*Math.sin(a*(1+i%2)+seed);
-   const cy=h*(.48+.13*Math.sin(a+seed));
-   const shift=h*.028*Math.sin(a*(1+i%3)+seed);
-   const rings=Math.ceil(maxR/gap)+1;
-   c.strokeStyle=i%3===0?pink:i%2===0?ivory:orange;
-   c.lineWidth=line;
-   for(let j=1;j<=rings;j++){
-    const radius=j*gap+shift;
-    if(radius<=0)continue;
-    c.beginPath();c.arc(cx,cy,radius,0,TAU);c.stroke();
-   }
-  }
-  // An opposing circular mask produces an eclipse/iris, never a hard jump.
-  const iris=h*(.09+.045*Math.sin(a))*s;
-  disc(c,w*.5+h*.12*Math.sin(a),h*.5,iris,black);
-  c.strokeStyle=fg;c.lineWidth=h*.008*s;
-  c.beginPath();c.arc(w*.5+h*.12*Math.sin(a),h*.5,iris+h*.015*s,0,TAU);c.stroke();
-  break;
+   const seed=i*1.9,x=w*(i+.5)/centers+h*.055*Math.sin(a*(1+i%2)+seed);
+   const y=h*(.48+.13*Math.sin(a+seed)),radius=h*(.24+.05*Math.cos(a+seed))*s;
+   c.save();c.globalAlpha=.2;gradientDisc(c,x,y,radius*1.7,pink);c.restore();
+   c.save();c.globalAlpha=.68;gradientDisc(c,x,y,radius,red);c.restore();
+   c.save();c.globalAlpha=.34;gradientDisc(c,x-h*.025,y-h*.025,radius*.5,ivory);c.restore();
+  }break;
  }
+
  }
  c.restore();
 }
