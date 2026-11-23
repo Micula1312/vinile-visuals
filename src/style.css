@@ -27,3 +27,29 @@
 .hydra-patch-params label{display:flex;flex-direction:column;gap:5px;min-width:150px;font-size:11px}
 .hydra-status,.hydra-render-error,.hydra-help{font-size:12px;line-height:1.5;color:#bcb6bf;overflow-wrap:anywhere}
 @media(max-width:850px){.hydra-editor-layout{grid-template-columns:1fr}.hydra-code{min-height:240px}.hydra-panel{padding:12px}}
+
+
+/* Studio compact redesign — preview stays in view while scrolling parameters */
+.studio{grid-template-columns:205px minmax(0,1fr)}
+.studio aside{padding:12px 14px;position:sticky;top:0;height:calc(100vh - 68px)}
+.studio .family{padding:10px 0}
+.studio .family h3{margin-bottom:7px}
+.studio .scene{padding:7px 0}
+.workspace{padding:12px 22px;min-width:0}
+.workspace .toolbar{margin-bottom:7px;align-items:center;gap:10px;flex-wrap:wrap}
+.workspace .screen{position:sticky;top:0;z-index:20;padding:6px;background:#09090b;border:1px solid #33363a;box-shadow:0 8px 20px #0009}
+.workspace .screen canvas{width:100%;max-height:clamp(110px,23vh,250px);object-fit:contain}
+.workspace .transport{margin:8px 0 10px;gap:10px}
+.workspace .transport button{padding:7px 12px}
+.workspace .settings{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 20px;padding:12px 0}
+.workspace .settings>.control[hidden]{display:none!important}
+.workspace .settings .control{min-width:0}
+.workspace .settings .control>label{margin-bottom:5px;font-size:10px}
+.workspace .settings input[type=range]{height:14px;accent-color:#ff481c}
+.workspace .settings .auto-flag{font-size:9px}
+.workspace .renderbar{padding:12px 0;gap:7px}
+.workspace .renderbar button{padding:8px 10px}
+.workspace .renderbar input{padding:6px}
+#hydra-editor-open{font-size:11px;padding:8px 12px}
+@media(max-width:950px){.studio{grid-template-columns:155px minmax(0,1fr)}.workspace{padding:10px}.workspace .settings{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+@media(max-width:650px){.studio{grid-template-columns:1fr}.studio aside{position:relative;height:auto;max-height:180px;overflow:auto}.workspace .settings{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace .screen{top:0}.workspace .screen canvas{max-height:25vh}}
