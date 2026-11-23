@@ -87,7 +87,17 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
   // Explicit time advance: same engine for preview and recording.
   if(typeof hydra.tick==='function')hydra.tick(1000/30);
   patchError='';
-  c.drawImage(canvas,0,0,w,h);
+  if(scene.family==='body'){
+   // Soft-focus diffusion on the finished image: applies consistently to all CENA studies.
+   // Render a slightly enlarged source to prevent blurred black borders.
+   const softness=Math.max(0,Math.min(1,Number(p.patch_softness??.65)));
+   const blurPx=softness*h*.055;
+   c.save();
+   c.filter=blurPx>0.01?`blur(${blurPx.toFixed(2)}px)`:'none';
+   const overscan=blurPx*2;
+   c.drawImage(canvas,-overscan,-overscan,w+overscan*2,h+overscan*2);
+   c.restore();
+  }else c.drawImage(canvas,0,0,w,h);
  }catch(err){
   patchError=err?.message||String(err);console.error('VINILE HYDRA:',err);
   c.fillStyle=scene.colors[0];c.fillRect(0,0,w,h);
