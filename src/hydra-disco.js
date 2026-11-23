@@ -3,10 +3,11 @@
 // source code must be supplied before faithful ports can be made.
 import Hydra from 'hydra-synth';
 import {redHydraStudies} from './hydra-red-studies.js';
+import {cenaStudies} from './hydra-cena.js';
 const TAU=Math.PI*2;
 let hydra=null,canvas=null,key='',live={},textCanvas=null;
 const customPatches=new Map();
-const builtInPatches=new Map(redHydraStudies.map(study=>[study.id,study.code]));
+const builtInPatches=new Map([...redHydraStudies,...cenaStudies].map(study=>[study.id,study.code]));
 let patchError='';
 export const getHydraPatch=id=>customPatches.get(id)||builtInPatches.get(id)||'';
 export const getHydraError=()=>patchError;
