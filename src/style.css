@@ -53,3 +53,11 @@
 #hydra-editor-open{font-size:11px;padding:8px 12px}
 @media(max-width:950px){.studio{grid-template-columns:155px minmax(0,1fr)}.workspace{padding:10px}.workspace .settings{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
 @media(max-width:650px){.studio{grid-template-columns:1fr}.studio aside{position:relative;height:auto;max-height:180px;overflow:auto}.workspace .settings{grid-template-columns:repeat(2,minmax(0,1fr))}.workspace .screen{top:0}.workspace .screen canvas{max-height:25vh}}
+
+
+/* Custom Hydra clip faders, integrated into compact Studio */
+.hydra-study-controls{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px 16px;border:1px solid #633342;background:#211419;padding:12px}
+.hydra-study-controls>strong{grid-column:1/-1;color:#ee69a7;font-size:11px;letter-spacing:.08em}
+.hydra-study-controls label{display:flex;flex-direction:column;gap:6px;font-size:10px}
+.hydra-study-controls output{color:#ee69a7}
+.hydra-study-controls input[type=range]{width:100%;accent-color:#e60023}
