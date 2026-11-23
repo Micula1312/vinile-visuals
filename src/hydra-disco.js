@@ -4,12 +4,29 @@
 import Hydra from 'hydra-synth';
 const TAU=Math.PI*2;
 let hydra=null,canvas=null,key='',live={},textCanvas=null;
+const customPatches=new Map();
+let patchError='';
+export const getHydraPatch=id=>customPatches.get(id)||'';
+export const getHydraError=()=>patchError;
+export function setHydraPatch(id,code){if(typeof code!=='string'||code.length>40000)throw Error('Script must be shorter than 40 KB');if(code.trim())customPatches.set(id,code);else customPatches.delete(id);key='';patchError='';}
+
 const hexRgb=h=>{const v=h.replace('#','');const n=parseInt(v.length===3?v.split('').map(x=>x+x).join(''):v,16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]};
 const color=(src,rgb)=>src.color(...rgb);
 const val=(key,fallback)=>()=>Number(live[key]??fallback);
 const beat=()=>{const bpm=Math.max(60,Math.min(180,Math.round((live.bpm||120)/2)*2));return Math.sin((live.phase||0)*TAU*bpm/2)};
 const speed=()=>Math.max(.1,Number(live.speed)||1);
 function build(v){
+ const custom=customPatches.get(live.sceneId);
+ if(custom){
+  const synth=hydra.synth;
+  const names=['osc','shape','noise','voronoi','gradient','solid','src','o0','o1','o2','o3','s0','s1','s2','s3','render','hush'];
+  const param=(name,initial=0,min=0,max=1)=>{const n=Number(live['patch_'+name]??initial);return ()=>Math.max(Number(min),Math.min(Number(max),n))};
+  // Explicit user-authored local scripts: JavaScript is powerful. Do not paste untrusted code.
+  const run=new Function(...names,'param','bpm','palette','time', '"use strict";\n'+custom);
+  run(...names.map(n=>synth[n]),param,()=>Number(live.bpm||120),{background:live.bg,foreground:live.fg,highlight:live.accent},()=>Number(live.phase||0));
+  return;
+ }
+
  const h=hydra.synth;
  const {osc,shape,noise,voronoi,gradient,solid,src,o0,s0}=h;
  const ink=hexRgb(live.fg),accent=hexRgb(live.accent),bg=hexRgb(live.bg);
@@ -47,7 +64,7 @@ function build(v){
 export function renderHydraDisco(c,w,h,phase,scene,p,palette){
  try{
   const v=scene.isText?9:scene.variant;
-  const next=[v,w,h,scene.colors[0],scene.colors[1],palette.highlight].join('|');
+  const next=[v,w,h,scene.id,scene.colors[0],scene.colors[1],palette.highlight].join('|');
   if(!textCanvas)textCanvas=document.createElement('canvas');
   textCanvas.width=Math.max(2,Math.min(1536,w));textCanvas.height=Math.max(2,Math.round(h*textCanvas.width/w));
   const tc=textCanvas.getContext('2d');
@@ -56,7 +73,7 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
   tc.fillStyle=scene.colors[1];tc.textAlign='center';tc.textBaseline='middle';
   let size=textCanvas.height*.55;do{tc.font='italic 900 '+Math.round(size)+'px Georgia, serif';if(tc.measureText(word).width<textCanvas.width*.84)break;size*=.9}while(size>12);
   tc.fillText(word,textCanvas.width/2,textCanvas.height/2);
-  live={...p,phase,fg:scene.colors[1],bg:scene.colors[0],accent:palette.highlight,textCanvas};
+  live={...p,phase,sceneId:scene.id,fg:scene.colors[1],bg:scene.colors[0],accent:palette.highlight,textCanvas};
   if(!hydra||key!==next){
    if(hydra){try{hydra.hush()}catch(_){}}
    canvas=document.createElement('canvas');canvas.width=textCanvas.width;canvas.height=textCanvas.height;
@@ -65,9 +82,10 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
   }
   // Explicit time advance: same engine for preview and recording.
   if(typeof hydra.tick==='function')hydra.tick(1000/30);
+  patchError='';
   c.drawImage(canvas,0,0,w,h);
  }catch(err){
-  console.error('VINILE HYDRA:',err);
+  patchError=err?.message||String(err);console.error('VINILE HYDRA:',err);
   c.fillStyle=scene.colors[0];c.fillRect(0,0,w,h);
   c.fillStyle=palette.highlight;c.font=Math.max(14,h*.045)+'px monospace';
   c.fillText('HYDRA ERROR — SEE CONSOLE',w*.04,h*.5);
