@@ -92,15 +92,30 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
    // Render a slightly enlarged source to prevent blurred black borders.
    const softness=Math.max(0,Math.min(1,Number(p.patch_softness??.65)));
    const blurPx=softness*h*.055;
-   c.save();
-   c.filter=blurPx>0.01?`blur(${blurPx.toFixed(2)}px)`:'none';
-   const overscan=blurPx*2;
    if(scene.id==='body-001'){
-    // Render square Hydra texture into a square region: true circular sun on panoramic output.
-    const side=h*1.75;
-    c.drawImage(canvas,(w-side)/2-overscan,(h-side)/2-overscan,side+overscan*2,side+overscan*2);
-   }else c.drawImage(canvas,-overscan,-overscan,w+overscan*2,h+overscan*2);
-   c.restore();
+    // Square Hydra is only a texture source. Never display its square background.
+    // Apply soft focus first, then a radial alpha mask, composited on pure black.
+    const side=Math.max(2,Math.round(h*1.7));
+    const tmp=document.createElement('canvas');tmp.width=side;tmp.height=side;
+    const tc=tmp.getContext('2d');
+    tc.filter=blurPx>.01?`blur(${(blurPx*side/h).toFixed(2)}px)`:'none';
+    tc.drawImage(canvas,0,0,side,side);
+    tc.filter='none';
+    tc.globalCompositeOperation='destination-in';
+    const mask=tc.createRadialGradient(side/2,side/2,side*.32,side/2,side/2,side*.49);
+    mask.addColorStop(0,'rgba(0,0,0,1)');
+    mask.addColorStop(1,'rgba(0,0,0,0)');
+    tc.fillStyle=mask;tc.fillRect(0,0,side,side);
+    tc.globalCompositeOperation='source-over';
+    c.fillStyle='#000';c.fillRect(0,0,w,h);
+    c.drawImage(tmp,(w-side)/2,(h-side)/2);
+   }else{
+    c.save();
+    c.filter=blurPx>.01?`blur(${blurPx.toFixed(2)}px)`:'none';
+    const overscan=blurPx*2;
+    c.drawImage(canvas,-overscan,-overscan,w+overscan*2,h+overscan*2);
+    c.restore();
+   }
   }else c.drawImage(canvas,0,0,w,h);
  }catch(err){
   patchError=err?.message||String(err);console.error('VINILE HYDRA:',err);
