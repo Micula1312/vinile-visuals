@@ -14,7 +14,15 @@ const airbrush=(c,y0,y1,red='#E60023')=>{
  g.addColorStop(0,'#F5B7B3');g.addColorStop(.38,red);g.addColorStop(.72,'#B22C45');g.addColorStop(1,'#541229');
  return g;
 };
-const ambient=(c,w,h,red)=>{rect(c,0,0,w,h,airbrush(c,0,h,red))};
+const ambient=(c,w,h,bg)=>{
+ // Respect the Studio BACKGROUND picker: it is the actual base tint for every Sunset scene.
+ rect(c,0,0,w,h,bg);
+ const shade=c.createLinearGradient(0,0,0,h);
+ shade.addColorStop(0,'rgba(255,235,225,.14)');
+ shade.addColorStop(.48,'rgba(255,235,225,0)');
+ shade.addColorStop(1,'rgba(30,0,20,.22)');
+ c.save();c.fillStyle=shade;c.fillRect(0,0,w,h);c.restore();
+};
 const gradientDisc=(c,x,y,r,red)=>{
  c.save();c.beginPath();c.arc(x,y,Math.max(.1,r),0,TAU);c.clip();
  rect(c,x-r,y-r,2*r,2*r,airbrush(c,y-r,y+r,red));c.restore();
@@ -27,7 +35,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
  case 0:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const r=h*.82*s,x=-r*1.15+(w+r*2.3)*t,y=h*(.9-.57*Math.sin(Math.PI*t));
   gradientDisc(c,x,y,r,pink);
   // A broad velvety horizon replaces the thin graphic stripes.
@@ -36,7 +44,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 02: horizontal procession, repeated with exact wrap.
  case 1:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const step=h*.9/mult,shift=.5*step*Math.sin(a);
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
    const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.48:.41)*s;
@@ -48,7 +56,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 03: repeated suns emerge from a single location and dissolve into a grid.
  case 2:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const bloom=(1-Math.cos(a))*.5,cols=7+6*mult,rows=3;
   for(let j=0;j<rows;j++)for(let i=0;i<cols;i++){
    const x=w*.5+(i-(cols-1)/2)*(w/(cols-1))*bloom,y=h*.5+(j-1)*h*.29*bloom;
@@ -58,7 +66,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
 
  // 04: CONSTELLATION BURSTS — solid flat-ink circles only, no glows or trails.
  case 3:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const bursts=3+mult*2;
   for(let k=0;k<bursts;k++){
    const seed=k*2.3999632297,x=((k*.61803398875+.23)%1)*w+h*.045*Math.sin(a+seed);
@@ -72,7 +80,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
 
  // 05: many horizontal light reflections sliding at different speeds.
  case 4:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   // Wide blurred reflections instead of dozens of thin horizontal bars.
   const horizon=h*.43;
   for(let i=0;i<5*mult;i++){
@@ -89,7 +97,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 06: PIXEL STEPS — animated mosaic staircase, no wave geometry.
  case 5:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const cols=Math.max(7,Math.round((12+mult*3)/Math.max(.65,s))),rows=5+Math.min(4,mult),cw=w/cols,ch=h/rows;
   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
    const intensity=.5+.5*Math.sin(a+col*.47+row*.83);
@@ -102,7 +110,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
 
  // 07: flowing ribbons, not suns or circles; each ribbon undulates independently.
  case 6:{
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   // Large translucent airbrushed swells, no fine vector ribbons.
   const swells=3+mult;
   for(let j=0;j<swells;j++){
@@ -126,7 +134,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  // Layered rings drift on independent periodic orbits, creating a slow parallax.
  case 7:{
   // Vintage optical sunset: a procession of solar medallions and eccentric halos.
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const count=2+mult;
   for(let i=0;i<count;i++){
    const seed=i*2.3999632297;
@@ -148,7 +156,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  // 09: sliding curtains of warm color, revealing new stripes at different rates.
  case 8:{
   // Vintage geometric sunset: monumental moving sun-cutout panels, not curtains.
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const count=4+Math.min(4,mult),step=w/count;
   for(let i=-1;i<=count;i++){
    const x=(i+.5)*step+step*.18*Math.sin(a+i*.6);
@@ -171,7 +179,7 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  // 10: optical sunset — interlaced concentric wavefronts create a moving moire.
  case 9:{
   // Vintage celestial geometry: radial sunbursts, eight-point stars and solar discs.
-  ambient(c,w,h,pink);
+  ambient(c,w,h,bg);
   const count=2+mult;
   for(let i=0;i<count;i++){
    const seed=i*1.9;
