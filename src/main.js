@@ -131,7 +131,7 @@ const visibleByFamily={
  liquid:['scale','speed','bg','fg'],
  body:['scale','speed','bg','fg']
 };
-const essential=new Set([...(visibleByFamily[selected.family]||['scale','speed','bg','fg']),'copies','copiesY','pulse','drift','dither']);
+const essential=new Set([...(visibleByFamily[selected.family]||['scale','speed','bg','fg']),...(selected.family==='night'?[]:['copies','copiesY','pulse','drift','dither'])]);
 document.querySelectorAll('.settings > .control').forEach(control=>{
  const ids=[...control.querySelectorAll('input[id],select[id]')].map(el=>el.id);
  if(ids.length && !ids.some(id=>essential.has(id)))control.hidden=true;
