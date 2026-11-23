@@ -70,7 +70,9 @@ function render(c,w,h,phase,s=selected,p=params,flags=autoParams){
  const zoom=1+pulse*.28*(.5-.5*Math.cos(a));
  // Continuous left-to-right travel: at drift=1 the image moves one full canvas width per loop.
  // Repeated tiles wrap cleanly at the 30-second boundary without reversing direction.
- const offset=drift*w*(((phase%1)+1)%1);
+ // Sunset drift moves back and forth smoothly, returning to its exact starting position.
+ // Other families retain their existing scrolling behavior.
+ const offset=s.family==='sunset'?drift*w*.24*Math.sin(phase*Math.PI*2):drift*w*(((phase%1)+1)%1);
  c.save();c.fillStyle=s.colors[0];c.fillRect(0,0,w,h);
  c.beginPath();c.rect(0,0,w,h);c.clip();
  for(let row=-1;row<=copiesY;row++)for(let col=-copies-2;col<copies+2;col++){
