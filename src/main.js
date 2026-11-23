@@ -19,6 +19,7 @@ const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#E
 const families=[['sunset','SUNSET STUDIES','Golden-hour discs, horizons, optical afterglow'],['night','NIGHT SHIFT / HYDRA DISCO','Glitch, velvet, prisms and optical modulation'],['body','LIVE / CENA','Slow magma, fire, eclipses and solar studies'],['type','AFTER HOURS','Electric-blue editorial kinetic typography'],['liquid','LIQUID SIGNAL','Violet fluid waves and transformations'],['optical','OPTICAL STUDIES','Hydra-inspired blurred light and interference'],['red','RED PASSION','Dinner, cabaret, pop-trash GIFs and bitmap distortion']];
 const scenes=families.flatMap(([family,name],fi)=>Array.from({length:10},(_,i)=>({id:`${family}-${String(i+1).padStart(3,'0')}`,family,name:`${name} / ${String(i+1).padStart(2,'0')}`,variant:i,colors:[[P.black,P.ivory],[P.black,P.blue],[P.black,P.violet],[P.black,P.blue],[P.black,P.violet],[P.black,P.violet],[P.black,P.red]][fi]})));
 for(const s of scenes.filter(s=>s.family==='body')){const study=cenaStudies[s.variant];s.name=study.name;s.colors=[P.black,P.red]}
+scenes.push({id:'body-011',family:'body',name:cenaStudies[10].name,variant:10,colors:[P.black,P.red]});
 const discoNames=['SUNSET AFTER DARK','TRIANGLE FEVER','GLITCH AFFAIR','VELVET','CELESTE','MALITZIN','EXAMPLE 09','RITCHSE','MARIANNE','TEXT GLITCH'];
 for(const s of scenes.filter(s=>s.family==='night')){s.name='DISCO / '+String(s.variant+1).padStart(2,'0')+' — '+discoNames[s.variant];if(s.variant===9)s.isText=true}
 for(const [i,study] of redHydraStudies.entries()){
