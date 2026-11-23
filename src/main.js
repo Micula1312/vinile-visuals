@@ -23,6 +23,7 @@ for(const s of scenes.filter(s=>s.family==='night')){s.name='DISCO / '+String(s.
 for(const [i,study] of redHydraStudies.entries()){
  scenes.push({id:study.id,family:'night',name:'DISCO / '+String(11+i).padStart(2,'0')+' — '+study.name,variant:10+i,colors:[P.black,P.red]});
 }
+const hydraValuesByScene=new Map();
 const redStudyForScene=id=>[...redHydraStudies,...cenaStudies].find(study=>study.id===id);
 const textFamilies=new Set(['sunset','red','type']);
 for(const [family,name] of families.filter(([id])=>textFamilies.has(id))){const base=scenes.find(s=>s.family===family);scenes.push({id:family+'-011',family,name:name+' / 11 — TEXT',variant:10,isText:true,colors:[...base.colors]})}
@@ -149,8 +150,8 @@ if(['night','body'].includes(selected.family)){
    const label=document.createElement('label'),value=document.createElement('output'),input=document.createElement('input');
    label.textContent=name.toUpperCase();input.type='range';input.min=min;input.max=max;
    input.step=Number(max)-Number(min)>20?'0.1':'0.01';
-   const key='patch_'+name;input.value=params[key]??initial;params[key]=Number(input.value);value.textContent=input.value;
-   input.oninput=()=>{params[key]=Number(input.value);value.textContent=input.value};
+   const key='patch_'+name;const sceneValues=hydraValuesByScene.get(selected.id)||{};input.value=sceneValues[key]??initial;params[key]=Number(input.value);value.textContent=input.value;
+   input.oninput=()=>{params[key]=Number(input.value);value.textContent=input.value;const values=hydraValuesByScene.get(selected.id)||{};values[key]=params[key];hydraValuesByScene.set(selected.id,values)};
    label.append(value,input);section.append(label);
   }
   settings.prepend(section);
