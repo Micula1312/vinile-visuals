@@ -7,17 +7,25 @@ const motion=()=>time()*tempo();
 ${body}
 `;
 export const cenaStudies=[
- ['SOLAR CORE',`// Correct for the 2304x512 panoramic canvas: preserve circular proportions.
-const aspect=1; // Rendered in a square Hydra source to keep the solar disc round.
-const sun=()=>shape(99,.35,.20).scale(1,1/aspect,1)
-  .modulate(noise(2.5,()=>tempo()*.016).scale(1,1/aspect,1),.055);
-const surface=()=>noise(5,()=>tempo()*.018)
-  .modulate(noise(2,()=>tempo()*.009),.12)
-  .color(fire,.18,.035);
+ ['SOLAR CORE',`// Circular solar body on square Hydra source; panorama masking is in renderer.
+// All motion is controlled by TEMPO. At zero, magma freezes.
+const drift=()=>time()*tempo();
+const disc=()=>shape(99,.355,.18);
+const magma=()=>noise(4.2,0)
+  .scrollX(()=>drift()*.022)
+  .scrollY(()=>drift()*.013)
+  .modulate(noise(2.1,0)
+    .scrollX(()=>-drift()*.012)
+    .scrollY(()=>drift()*.019),.18);
+const veins=()=>noise(9,0)
+  .scrollX(()=>-drift()*.037)
+  .scrollY(()=>drift()*.011)
+  .contrast(1.65);
 solid(0,0,0)
-  .add(sun().color(fire,.18,.025).brightness(.18),.85)
-  .add(surface().mask(sun()),.68)
-  .add(shape(99,.39,.35).scale(1,1/aspect,1).color(fire,.13,.015),.18)
+  .add(disc().color(fire,.09,.02),.8)
+  .add(magma().color(fire,.24,.025).mask(disc()),.75)
+  .add(veins().color(1.1,.06,.01).mask(disc()),.22)
+  .add(shape(99,.37,.28).color(fire,.08,.015),.12)
   .out(o0);`],
  ['RED ECLIPSE',`solid(.01,0,0).add(shape(99,.35,.12).color(fire,.015,.035)).mult(gradient(1).rotate(()=>motion()*.07).brightness(.25)).out(o0);`],
  ['EMBER TUNNEL',`osc(16,()=>tempo()*.006,1).kaleid(16).modulateRotate(noise(1.2,()=>tempo()*.025),.22).color(fire,.04,.025).contrast(1.12).out(o0);`],
