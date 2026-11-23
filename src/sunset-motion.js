@@ -6,6 +6,19 @@ const wave=(t,offset=0)=>Math.sin(TAU*t+offset);
 const disc=(c,x,y,r,color)=>{c.fillStyle=color;c.beginPath();c.arc(x,y,Math.max(.1,r),0,TAU);c.fill()};
 const rect=(c,x,y,w,h,color)=>{c.fillStyle=color;c.fillRect(x,y,w,h)};
 const bandSun=(c,x,y,r,ink,cut)=>{disc(c,x,y,r,ink);c.save();c.beginPath();c.arc(x,y,r,0,TAU);c.clip();for(let k=0;k<4;k++){const yy=y+r*(.10+k*.29),thick=r*(.045+k*.018);rect(c,x-r,yy,2*r,thick,cut)}c.restore()};
+
+// Shared airbrushed color language from SUNSET / TEXT: blush → red → burgundy.
+// Native Canvas gradients, no external assets; no temporal noise or visible seams.
+const airbrush=(c,y0,y1,red='#E60023')=>{
+ const g=c.createLinearGradient(0,y0,0,y1);
+ g.addColorStop(0,'#F5B7B3');g.addColorStop(.38,red);g.addColorStop(.72,'#B22C45');g.addColorStop(1,'#541229');
+ return g;
+};
+const ambient=(c,w,h,red)=>{rect(c,0,0,w,h,airbrush(c,0,h,red))};
+const gradientDisc=(c,x,y,r,red)=>{
+ c.save();c.beginPath();c.arc(x,y,Math.max(.1,r),0,TAU);c.clip();
+ rect(c,x-r,y-r,2*r,2*r,airbrush(c,y-r,y+r,red));c.restore();
+};
 export function renderSunset(c,w,h,phase,scene,params,P){
  const v=scene.variant, bg=scene.colors[0],fg=scene.colors[1],s=params.scale||1;
  const mult=Math.max(1,Math.round(params.multiply||1));
@@ -14,41 +27,23 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
  case 0:{
-  const r=h*.82*s;
-  // One slow crossing per full loop. The sun starts and ends fully outside the frame.
-  const x=-r*1.15+(w+r*2.3)*t;
-  const y=h*(.9-.57*Math.sin(Math.PI*t));
-  disc(c,x,y,r,fg);rect(c,0,h*.72,w,h*.28,black);
-  for(let i=0;i<8;i++)rect(c,0,h*(.76+i*.031),w,h*.009,i%2?red:orange);
+  ambient(c,w,h,pink);
+  const r=h*.82*s,x=-r*1.15+(w+r*2.3)*t,y=h*(.9-.57*Math.sin(Math.PI*t));
+  gradientDisc(c,x,y,r,pink);
+  // A broad velvety horizon replaces the thin graphic stripes.
+  rect(c,0,h*.76,w,h*.24,airbrush(c,h*.72,h*1.2,red));
   break;
  }
  // 02: horizontal procession, repeated with exact wrap.
  case 1:{
+  ambient(c,w,h,pink);
   const step=h*.9/mult,shift=.5*step*Math.sin(a);
   for(let i=-2;i<Math.ceil(w/step)+3;i++){
    const x=i*step+shift,y=h*(.42+.045*Math.sin(i*1.4)),r=h*(i%3===0?.48:.41)*s;
-   bandSun(c,x,y,r,i%3===0?pink:fg,bg);
+   gradientDisc(c,x,y,r,i%3===0?pink:red);
   }
-  // Vintage 1970s airbrush poster: broad receding bands, not hairline vector waves.
-  const seaTop=h*.69;
-  rect(c,0,seaTop,w,h-seaTop,black);
-  const bands=9;
-  for(let row=0;row<bands;row++){
-   const depth=row/(bands-1),base=seaTop+h*(.025+Math.pow(depth,1.55)*.29);
-   const thick=h*(.014+depth*.027),amplitude=h*(.002+depth*.006);
-   const wavelength=h*(2.8+row*.4);
-   const ink=[orange,pink,fg,orange,fg,pink,orange,fg,orange][row];
-   c.beginPath();
-   for(let x=0;x<=w+h*.03;x+=Math.max(4,h*.018)){
-    const yy=base+amplitude*Math.sin(TAU*(x/wavelength+(row%2?1:-1)*t)+row*.45);
-    if(x===0)c.moveTo(x,yy);else c.lineTo(x,yy);
-   }
-   for(let x=w+h*.03;x>=0;x-=Math.max(4,h*.018)){
-    const yy=base+amplitude*Math.sin(TAU*(x/wavelength+(row%2?1:-1)*t)+row*.45)+thick;
-    c.lineTo(x,yy);
-   }
-   c.closePath();c.fillStyle=ink;c.globalAlpha=.64+depth*.25;c.fill();c.globalAlpha=1;
-  }
+  // Smooth, continuous color field: no decorative horizontal rules.
+  rect(c,0,h*.70,w,h*.30,airbrush(c,h*.68,h*1.15,pink));
   break;
  }
  // 03: repeated suns emerge from a single location and dissolve into a grid.
@@ -95,14 +90,20 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 05: many horizontal light reflections sliding at different speeds.
  case 4:{
-  rect(c,0,0,w,h*.23,red);
-  for(let row=0;row<24*mult;row++){
-   const y=h*(.24+row*.032/mult),step=h*(.29+(row%5)*.15),speed=(row%2?1:-1);
-   for(let i=-2;i<Math.ceil(w/step)+3;i++){
-    const x=i*step+speed*.5*step*Math.sin(a)+(row%4)*h*.12;
-    rect(c,x,y,step*(.27+.28*Math.sin(row*2)**2),h*(.006+row*.0005),row%4===0?ivory:row%3===0?pink:fg);
-   }
-  }break;
+  ambient(c,w,h,pink);
+  // Wide blurred reflections instead of dozens of thin horizontal bars.
+  const horizon=h*.43;
+  for(let i=0;i<5*mult;i++){
+   const y=horizon+(i+.4)*h*.55/(5*mult);
+   const x=w*(.5+.2*Math.sin(a+i*.65));
+   const width=w*(.22+.11*Math.sin(i*1.7)**2);
+   const g=c.createLinearGradient(x-width,y,x+width,y);
+   g.addColorStop(0,'rgba(245,183,179,0)');
+   g.addColorStop(.5,i%2?'rgba(255,185,145,.42)':'rgba(255,224,202,.53)');
+   g.addColorStop(1,'rgba(245,183,179,0)');
+   c.fillStyle=g;c.fillRect(x-width,y-h*.022,width*2,h*.044);
+  }
+  break;
  }
  // 06: PIXEL STEPS — animated mosaic staircase, no wave geometry.
  case 5:{
@@ -138,47 +139,40 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  }
  // 07: flowing ribbons, not suns or circles; each ribbon undulates independently.
  case 6:{
-  const ribbons=4+mult*2,step=h*.015;
-  for(let j=0;j<ribbons;j++){
-   const base=h*(.13+(j+.5)*.75/ribbons);
-   const amplitude=h*(.035+.017*(j%3))*s;
-   const wavelength=h*(1.4+(j%4)*.6);
-   const thickness=h*(.055+.022*(j%3))*s;
-   const direction=j%2?-1:1;
+  ambient(c,w,h,pink);
+  // Large translucent airbrushed swells, no fine vector ribbons.
+  const swells=3+mult;
+  for(let j=0;j<swells;j++){
+   const base=h*(.10+(j+.5)*.8/swells),amplitude=h*(.045+.012*(j%3))*s;
+   const wavelength=h*(2.2+j*.35),thickness=h*(.15+.025*(j%2))*s;
+   const grad=airbrush(c,base-amplitude,base+thickness+amplitude,j%2?pink:red);
    c.beginPath();
-   for(let x=0;x<=w+step;x+=step){
-    const y=base+amplitude*Math.sin(TAU*x/wavelength+direction*a+j*.8)
-      +amplitude*.42*Math.sin(TAU*x/(wavelength*.56)-direction*a+j);
+   for(let x=0;x<=w+h*.02;x+=h*.02){
+    const y=base+amplitude*Math.sin(TAU*x/wavelength+a*(j%2?-1:1)+j*.9);
     if(x===0)c.moveTo(x,y);else c.lineTo(x,y);
    }
-   for(let x=w+step;x>=0;x-=step){
-    const y=base+amplitude*Math.sin(TAU*x/wavelength+direction*a+j*.8)
-      +amplitude*.42*Math.sin(TAU*x/(wavelength*.56)-direction*a+j)+thickness;
+   for(let x=w+h*.02;x>=0;x-=h*.02){
+    const y=base+amplitude*Math.sin(TAU*x/wavelength+a*(j%2?-1:1)+j*.9)+thickness;
     c.lineTo(x,y);
    }
-   c.closePath();c.fillStyle=j%4===0?pink:j%3===0?ivory:j%2?fg:orange;c.fill();
+   c.closePath();c.fillStyle=grad;c.globalAlpha=.68;c.fill();c.globalAlpha=1;
   }
   break;
  }
  // 08: solar afterimage / eccentric circular optical illusion.
  // Layered rings drift on independent periodic orbits, creating a slow parallax.
  case 7:{
+  ambient(c,w,h,pink);
   const count=2+mult;
   for(let i=0;i<count;i++){
-   const seed=i*2.3999632297;
-   const cx=w*(i+.5)/count;
-   const cy=h*(.5+.09*Math.sin(seed));
+   const seed=i*2.3999632297,cx=w*(i+.5)/count;
    const x=cx+h*.09*Math.sin(a*(1+i%3)+seed);
-   const y=cy+h*.07*Math.cos(a*(1+i%2)+seed);
-   const outer=h*(.19+.045*(i%3))*s;
-   // Concentric ink rings form a moire-like solar disc, with independent centers.
-   for(let j=6;j>=0;j--){
-    const radius=outer*(j+1)/7;
-    const ox=h*.025*Math.sin(a*(1+j%3)+seed+j*.32);
-    const oy=h*.025*Math.cos(a*(1+j%2)+seed-j*.25);
-    disc(c,x+ox,y+oy,radius,j%4===0?pink:j%2===0?orange:fg);
-   }
-   disc(c,x+h*.018*Math.sin(a+seed),y+h*.018*Math.cos(a+seed),outer*.12,black);
+   const y=h*(.5+.09*Math.sin(seed))+h*.07*Math.cos(a*(1+i%2)+seed);
+   const radius=h*(.24+.045*(i%3))*s;
+   // A soft solar afterimage rather than sharp concentric optical rings.
+   c.save();c.globalAlpha=.22;gradientDisc(c,x+h*.025,y+h*.025,radius*1.24,pink);c.restore();
+   gradientDisc(c,x,y,radius,i%2?pink:red);
+   c.save();c.globalAlpha=.18;gradientDisc(c,x-h*.025,y-h*.03,radius*.67,ivory);c.restore();
   }
   break;
  }
