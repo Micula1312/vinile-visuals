@@ -21,6 +21,7 @@ for(const s of scenes.filter(s=>s.family==='night')){s.name='DISCO / '+String(s.
 for(const [i,study] of redHydraStudies.entries()){
  scenes.push({id:study.id,family:'night',name:'DISCO / '+String(11+i).padStart(2,'0')+' — '+study.name,variant:10+i,colors:[P.black,P.red]});
 }
+const redStudyForScene=id=>redHydraStudies.find(study=>study.id===id);
 const textFamilies=new Set(['sunset','red','type']);
 for(const [family,name] of families.filter(([id])=>textFamilies.has(id))){const base=scenes.find(s=>s.family===family);scenes.push({id:family+'-011',family,name:name+' / 11 — TEXT',variant:10,isText:true,colors:[...base.colors]})}
 try{for(const [id,script] of Object.entries(JSON.parse(localStorage.getItem('vinile-hydra-patches-v1')||'{}'))){if(scenes.some(s=>s.id===id&&s.family==='night'))setHydraPatch(id,script)}}catch(e){console.warn('VINILE saved Hydra patches',e)}
@@ -135,6 +136,24 @@ const visibleByFamily={
  liquid:['scale','speed','bg','fg'],
  body:['scale','speed','bg','fg']
 };
+if(selected.family==='night'){
+ const study=redStudyForScene(selected.id);
+ if(study?.params){
+  const settings=document.querySelector('.settings');
+  const section=document.createElement('div');section.className='hydra-study-controls';
+  const title=document.createElement('strong');title.textContent='RED PATCH / LIVE FADERS';
+  section.append(title);
+  for(const [name,initial,min,max] of study.params){
+   const label=document.createElement('label'),value=document.createElement('output'),input=document.createElement('input');
+   label.textContent=name.toUpperCase();input.type='range';input.min=min;input.max=max;
+   input.step=Number(max)-Number(min)>20?'0.1':'0.01';
+   const key='patch_'+name;input.value=params[key]??initial;params[key]=Number(input.value);value.textContent=input.value;
+   input.oninput=()=>{params[key]=Number(input.value);value.textContent=input.value};
+   label.append(value,input);section.append(label);
+  }
+  settings.prepend(section);
+ }
+}
 const essential=new Set([...(visibleByFamily[selected.family]||['scale','speed','bg','fg']),...(selected.family==='night'?[]:['copies','copiesY','pulse','drift','dither'])]);
 document.querySelectorAll('.settings > .control').forEach(control=>{
  const ids=[...control.querySelectorAll('input[id],select[id]')].map(el=>el.id);
