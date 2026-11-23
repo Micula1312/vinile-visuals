@@ -2,11 +2,13 @@
 // Original, editable Hydra studies. The gallery references are NOT copied: their
 // source code must be supplied before faithful ports can be made.
 import Hydra from 'hydra-synth';
+import {redHydraStudies} from './hydra-red-studies.js';
 const TAU=Math.PI*2;
 let hydra=null,canvas=null,key='',live={},textCanvas=null;
 const customPatches=new Map();
+const builtInPatches=new Map(redHydraStudies.map(study=>[study.id,study.code]));
 let patchError='';
-export const getHydraPatch=id=>customPatches.get(id)||'';
+export const getHydraPatch=id=>customPatches.get(id)||builtInPatches.get(id)||'';
 export const getHydraError=()=>patchError;
 export function setHydraPatch(id,code){if(typeof code!=='string'||code.length>40000)throw Error('Script must be shorter than 40 KB');if(code.trim())customPatches.set(id,code);else customPatches.delete(id);key='';patchError='';}
 
@@ -16,7 +18,7 @@ const val=(key,fallback)=>()=>Number(live[key]??fallback);
 const beat=()=>{const bpm=Math.max(60,Math.min(180,Math.round((live.bpm||120)/2)*2));return Math.sin((live.phase||0)*TAU*bpm/2)};
 const speed=()=>Math.max(.1,Number(live.speed)||1);
 function build(v){
- const custom=customPatches.get(live.sceneId);
+ const custom=getHydraPatch(live.sceneId);
  if(custom){
   const synth=hydra.synth;
   const names=['osc','shape','noise','voronoi','gradient','solid','src','o0','o1','o2','o3','s0','s1','s2','s3','render','hush'];
