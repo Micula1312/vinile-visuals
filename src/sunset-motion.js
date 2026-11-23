@@ -125,45 +125,74 @@ export function renderSunset(c,w,h,phase,scene,params,P){
  // 08: solar afterimage / eccentric circular optical illusion.
  // Layered rings drift on independent periodic orbits, creating a slow parallax.
  case 7:{
+  // Vintage optical sunset: a procession of solar medallions and eccentric halos.
   ambient(c,w,h,pink);
   const count=2+mult;
   for(let i=0;i<count;i++){
-   const seed=i*2.3999632297,cx=w*(i+.5)/count;
-   const x=cx+h*.09*Math.sin(a*(1+i%3)+seed);
-   const y=h*(.5+.09*Math.sin(seed))+h*.07*Math.cos(a*(1+i%2)+seed);
-   const radius=h*(.24+.045*(i%3))*s;
-   // A soft solar afterimage rather than sharp concentric optical rings.
-   c.save();c.globalAlpha=.22;gradientDisc(c,x+h*.025,y+h*.025,radius*1.24,pink);c.restore();
-   gradientDisc(c,x,y,radius,i%2?pink:red);
-   c.save();c.globalAlpha=.18;gradientDisc(c,x-h*.025,y-h*.03,radius*.67,ivory);c.restore();
+   const seed=i*2.3999632297;
+   const x=w*(i+.5)/count+h*.07*Math.sin(a+seed);
+   const y=h*(.47+.075*Math.sin(seed))+h*.04*Math.cos(a+seed);
+   const radius=h*(.26+.025*(i%3))*s;
+   // Alternating airbrushed concentric discs: graphic solar geometry remains readable.
+   for(let j=5;j>=0;j--){
+    const rr=radius*(j+1)/6;
+    const ox=h*.012*Math.sin(a+j*.4+seed),oy=h*.012*Math.cos(a-j*.3+seed);
+    c.save();c.globalAlpha=j%2?.85:.7;
+    gradientDisc(c,x+ox,y+oy,rr,j%2?pink:red);c.restore();
+   }
+   c.save();c.globalAlpha=.88;disc(c,x,y,radius*.13,ivory);c.restore();
   }
   break;
  }
+
  // 09: sliding curtains of warm color, revealing new stripes at different rates.
  case 8:{
+  // Vintage geometric sunset: monumental moving sun-cutout panels, not curtains.
   ambient(c,w,h,pink);
-  const panels=5+Math.min(5,mult*2),step=w/panels;
-  for(let i=-1;i<=panels;i++){
-   const x=i*step+step*.2*Math.sin(a+i*.5);
-   const g=c.createLinearGradient(x,0,x+step*1.15,0);
-   g.addColorStop(0,'rgba(84,18,41,0)');
-   g.addColorStop(.42,i%2?'rgba(245,183,179,.6)':'rgba(230,0,35,.5)');
-   g.addColorStop(1,'rgba(84,18,41,0)');
-   c.fillStyle=g;c.fillRect(x,0,step*1.15,h);
-  }break;
+  const count=4+Math.min(4,mult),step=w/count;
+  for(let i=-1;i<=count;i++){
+   const x=(i+.5)*step+step*.18*Math.sin(a+i*.6);
+   const y=h*(.48+.055*Math.sin(a+i*.7));
+   const radius=Math.min(step*.53,h*.49)*s;
+   c.save();c.globalAlpha=.88;gradientDisc(c,x,y,radius,i%2?pink:red);c.restore();
+   // Broad horizon masks turn the circles into graphic half-suns.
+   const horizon=h*(.70+.025*Math.sin(a+i*.55));
+   c.save();c.fillStyle=airbrush(c,horizon,h*1.18,i%2?red:pink);
+   c.fillRect(x-radius,horizon,radius*2,h-horizon);c.restore();
+   // Small diamond-shaped evening stars punctuate the geometric rhythm.
+   const sx=x+step*.26,sy=h*.2+h*.025*Math.sin(a+i);
+   const rr=h*.023*s;
+   c.save();c.globalAlpha=.75;c.fillStyle=ivory;c.beginPath();
+   c.moveTo(sx,sy-rr);c.lineTo(sx+rr*.38,sy);c.lineTo(sx,sy+rr);c.lineTo(sx-rr*.38,sy);c.closePath();c.fill();c.restore();
+  }
+  break;
  }
 
  // 10: optical sunset — interlaced concentric wavefronts create a moving moire.
  case 9:{
+  // Vintage celestial geometry: radial sunbursts, eight-point stars and solar discs.
   ambient(c,w,h,pink);
-  const centers=2+mult;
-  for(let i=0;i<centers;i++){
-   const seed=i*1.9,x=w*(i+.5)/centers+h*.055*Math.sin(a*(1+i%2)+seed);
-   const y=h*(.48+.13*Math.sin(a+seed)),radius=h*(.24+.05*Math.cos(a+seed))*s;
-   c.save();c.globalAlpha=.2;gradientDisc(c,x,y,radius*1.7,pink);c.restore();
-   c.save();c.globalAlpha=.68;gradientDisc(c,x,y,radius,red);c.restore();
-   c.save();c.globalAlpha=.34;gradientDisc(c,x-h*.025,y-h*.025,radius*.5,ivory);c.restore();
-  }break;
+  const count=2+mult;
+  for(let i=0;i<count;i++){
+   const seed=i*1.9;
+   const x=w*(i+.5)/count+h*.045*Math.sin(a+seed);
+   const y=h*(.5+.06*Math.cos(a+seed));
+   const radius=h*(.21+.025*Math.sin(a+seed))*s;
+   // Eight broad, slowly rotating rays, with a proper solar centre.
+   const rays=8;
+   for(let j=0;j<rays;j++){
+    const angle=TAU*j/rays+.13*Math.sin(a+seed);
+    const inner=radius*.7,outer=radius*1.43;
+    c.save();c.globalAlpha=.65;c.fillStyle=j%2?ivory:pink;c.beginPath();
+    c.moveTo(x+Math.cos(angle-.11)*inner,y+Math.sin(angle-.11)*inner);
+    c.lineTo(x+Math.cos(angle)*outer,y+Math.sin(angle)*outer);
+    c.lineTo(x+Math.cos(angle+.11)*inner,y+Math.sin(angle+.11)*inner);
+    c.closePath();c.fill();c.restore();
+   }
+   gradientDisc(c,x,y,radius,i%2?pink:red);
+   c.save();c.globalAlpha=.6;gradientDisc(c,x-radius*.08,y-radius*.12,radius*.4,ivory);c.restore();
+  }
+  break;
  }
 
  }
