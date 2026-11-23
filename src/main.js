@@ -14,6 +14,7 @@ import {renderHydraDisco,setHydraPatch} from './hydra-disco.js';
 import {openHydraEditor} from './hydra-editor.js';
 import {redHydraStudies} from './hydra-red-studies.js';
 import {cenaStudies} from './hydra-cena.js';
+import {velvetLiveStudy} from './hydra-velvet-live.js';
 import {renderMonoCollage} from './disco-mono-collage.js';
 const P={black:'#0A0809',ivory:'#F5EFE5',orange:'#FF481C',red:'#E60023',pink:'#EE69A7',violet:'#A58AFF',blue:'#235BFF',grey:'#A3A0A0'};
 const families=[['sunset','SUNSET STUDIES','Golden-hour discs, horizons, optical afterglow'],['night','NIGHT SHIFT / HYDRA DISCO','Glitch, velvet, prisms and optical modulation'],['body','LIVE / CENA','Slow magma, fire, eclipses and solar studies'],['type','AFTER HOURS','Electric-blue editorial kinetic typography'],['liquid','LIQUID SIGNAL','Violet fluid waves and transformations'],['optical','OPTICAL STUDIES','Hydra-inspired blurred light and interference'],['red','RED PASSION','Dinner, cabaret, pop-trash GIFs and bitmap distortion']];
@@ -27,8 +28,9 @@ for(const [i,study] of redHydraStudies.entries()){
 }
 scenes.push({id:'night-016',family:'night',name:'DISCO / 16 — MONOCHROME COLLAPSE',variant:15,colors:[P.black,P.ivory]});
 const monoCollageStudy={id:'night-016',params:[['motion',0.35,0,2],['grain',0.5,0,1],['glitch',0.35,0,1],['depth',0.65,0,1]]};
+const velvetScene=scenes.find(s=>s.id==='night-004');if(velvetScene)velvetScene.name=velvetLiveStudy.name;
 const hydraValuesByScene=new Map();
-const redStudyForScene=id=>[...redHydraStudies,...cenaStudies,monoCollageStudy].find(study=>study.id===id);
+const redStudyForScene=id=>[...redHydraStudies,...cenaStudies,velvetLiveStudy,monoCollageStudy].find(study=>study.id===id);
 const textFamilies=new Set(['sunset','red','type']);
 for(const [family,name] of families.filter(([id])=>textFamilies.has(id))){const base=scenes.find(s=>s.family===family);scenes.push({id:family+'-011',family,name:name+' / 11 — TEXT',variant:10,isText:true,colors:[...base.colors]})}
 try{for(const [id,script] of Object.entries(JSON.parse(localStorage.getItem('vinile-hydra-patches-v1')||'{}'))){if(scenes.some(s=>s.id===id&&(s.family==='night'||s.family==='body')))setHydraPatch(id,script)}}catch(e){console.warn('VINILE saved Hydra patches',e)}
