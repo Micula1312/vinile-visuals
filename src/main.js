@@ -131,7 +131,7 @@ const visibleByFamily={
  night:['customText','hydraAmount','hydraFrequency','hydraGlitch','hydraBeat','bpm','speed','bg','fg'],
  sunset:['customText','scale','speed','multiply','sunsetGrain','sunsetGlow','sunsetBlur','sunsetBlackLift','sunsetGradient','sunsetHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
  type:['customText','scale','speed','typeGrain','typeGlow','typeBlur','typeBlackLift','typeGradient','typeHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
- red:['scale','speed','pixelSize','threshold','smear','glitch','redZoom','bg','fg'],
+ red:['scale','speed','pixelSize','threshold','smear','glitch','redZoom','bg','fg','photo-upload','collage-upload','gif-upload'],
  optical:['scale','speed','blur','distort','frequency','bg','fg'],
  liquid:['scale','speed','bg','fg'],
  body:['scale','speed','bg','fg']
