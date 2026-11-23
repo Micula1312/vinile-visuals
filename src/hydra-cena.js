@@ -37,3 +37,21 @@ solid(0,0,0)
  ['BURNING HORIZON',`gradient(1).rotate(0,()=>tempo()*.005).add(osc(7,()=>tempo()*.005,.5).modulate(noise(1,()=>tempo()*.015),.4),.5).color(fire,.15,.015).contrast(1.6).out(o0);`],
  ['AFTERGLOW',`osc(12,()=>tempo()*.003,.7).modulateScale(noise(1,()=>tempo()*.008),.22).color(fire,.05,.02).blend(src(o0).scale(.998),.25).out(o0);`]
 ].map(([name,body],i)=>({id:'body-'+String(i+1).padStart(3,'0'),name:'LIVE / CENA — '+name,code:head(body),params:[['tempo',0.12,0,1],['fire',1.6,0,3],['softness',0.65,0,1]]}));
+
+
+cenaStudies.push({
+ id:'body-011',
+ name:'LIVE / CENA — VELVET M / SLOW',
+ params:[['tempo',0.08,0,1],['fire',1.6,0,3],['softness',0.72,0,1],['distortion',0.25,0,1]],
+ code:`// Based on DISCO 04 / VELVET, slowed for dinner ambience.
+// TEMPO is a multiplier: 0 freezes, 0.08 is extremely slow.
+const tempo=param('tempo',0.08,0,1);
+const fire=param('fire',1.6,0,3);
+const distortion=param('distortion',0.25,0,1);
+noise(2,()=>0.06*tempo())
+ .modulate(noise(4,()=>0.04*tempo()),()=>0.03+distortion()*0.24)
+ .contrast(1.2)
+ .color(fire,0.08,0.02)
+ .blend(osc(2,()=>0.02*tempo()).color(fire,0.02,0.01),0.4)
+ .out(o0);`
+});
