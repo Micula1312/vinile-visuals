@@ -22,7 +22,7 @@ const gradientDisc=(c,x,y,r,red)=>{
 export function renderSunset(c,w,h,phase,scene,params,P){
  const v=scene.variant, bg=scene.colors[0],fg=scene.colors[1],s=params.scale||1;
  const mult=Math.max(1,Math.round(params.multiply||1));
- const t=wrap(phase*(params.speed||1),1), a=TAU*t, unit=h, orange=P.orange,pink=P.highlight,red=P.orange,ivory=P.ivory,black=P.black;
+ const t=wrap(phase*Math.max(1,Math.round(params.speed||1)),1), a=TAU*t, unit=h, orange=P.orange,pink=P.highlight,red=P.orange,ivory=P.ivory,black=P.black;
  c.save();c.beginPath();c.rect(0,0,w,h);c.clip();rect(c,0,0,w,h,bg);
  switch(v){
  // 01: a solar arc from left to right; the return path stays below the horizon.
