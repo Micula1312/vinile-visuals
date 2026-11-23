@@ -79,5 +79,23 @@ solid()
     .scrollY(1,()=>pulse()/30)
     .thresh(()=>pulse()).scale(()=>1+pulse()*2),()=>pulse()/2)
   .color(param('red',1.5,0,3),0,0.08)
-  .out(o0);`}
+  .out(o0);`},
+ {id:'night-015',name:'DISCO / KALEID VORTEX',params:[['speed',0.15,0,2],['scale',1,0.2,3],['repeat',5,1,15],['rotation',0.9,0,2],['modulation',1,0,3]],code:`// Original multi-buffer Hydra structure: o0 -> o1 -> o2.
+const wave=()=>Math.sin(time()*param('speed',0.15,0,2)());
+shape(20,0.1,0.01)
+  .scale(()=>Math.max(0.05,Math.abs(wave())*3)*param('scale',1,0.2,3)())
+  .repeat(()=>Math.max(1,Math.abs(wave())*param('repeat',5,1,15)()))
+  .modulateRotate(src(o0))
+  .scale(()=>Math.max(0.05,Math.abs(wave())*2))
+  .modulate(noise(2,0))
+  .rotate(0.1,param('rotation',0.9,0,2))
+  .out(o0);
+src(o0)
+  .modulate(osc(500,0,0),param('modulation',1,0,3))
+  .out(o1);
+src(o1)
+  .modulateKaleid(voronoi(()=>wave()*3,0.1,0.01),()=>wave()*3)
+  .scale(()=>Math.max(0.05,Math.abs(wave())*3))
+  .out(o2);
+render(o2);`}
 ];
