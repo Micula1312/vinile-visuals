@@ -5,7 +5,12 @@ export const butterDefaults=Object.fromEntries(butterControls.map(([k,l,v])=>['b
 export const butterAsset=id=>assets.get(id);
 export async function loadButter(id,file){
  const url=URL.createObjectURL(file),isVideo=file.type.startsWith('video/')||/\.mp4$/i.test(file.name);
+ const isGif=/\.gif$/i.test(file.name)||file.type==='image/gif';
  const media=isVideo?document.createElement('video'):new Image();
+ let decoder=null,frames=[],duration=0;
+ if(isGif&&typeof ImageDecoder!=='undefined'){
+ try{decoder=new ImageDecoder({data:await file.arrayBuffer(),type:'image/gif'});await decoder.tracks.ready;const count=decoder.tracks.selectedTrack.frameCount;for(let i=0;i<count;i++){const {image}=await decoder.decode({frameIndex:i});const delay=Math.max(20,(image.duration||100000)/1000);frames.push({image,end:duration+=delay});} }catch(e){for(const f of frames)f.image.close();frames=[];duration=0;}finally{decoder?.close();}
+ }
  try{
  await new Promise((resolve,reject)=>{
   media.onerror=()=>reject(Error('Media not supported'));
@@ -13,8 +18,8 @@ export async function loadButter(id,file){
   media.src=url;
  });
  if(isVideo)await media.play();
- const old=assets.get(id);if(old){old.media.pause?.();URL.revokeObjectURL(old.url)}
- assets.set(id,{media,url,name:file.name,isVideo});
+ const old=assets.get(id);if(old){old.media.pause?.();for(const f of old.frames||[])f.image.close();URL.revokeObjectURL(old.url)}
+ assets.set(id,{media,url,name:file.name,isVideo,frames,duration});
  }catch(e){URL.revokeObjectURL(url);throw e}
 }
 const liquid=document.createElement('canvas');
@@ -26,8 +31,8 @@ export function renderButter(c,w,h,phase,s,p){
  const v=k=>Number(p['butter_'+k]??butterDefaults['butter_'+k]);
  const a=assets.get(s.id);c.save();c.fillStyle='#160d08';c.fillRect(0,0,w,h);
  if(a){
- const m=a.media;if(a.isVideo){m.playbackRate=v('rate');if(m.paused)m.play().catch(()=>{});}
- const mw=m.videoWidth||m.naturalWidth,mh=m.videoHeight||m.naturalHeight;
+ const m=a.frames?.length?a.frames.find(f=>f.end>((phase*30000*v('rate'))%a.duration))?.image||a.frames[0].image:a.media;if(a.isVideo){m.playbackRate=v('rate');if(m.paused)m.play().catch(()=>{});}
+ const mw=m.videoWidth||m.naturalWidth||m.displayWidth,mh=m.videoHeight||m.naturalHeight||m.displayHeight;
  if(mw&&mh){
  const pix=v('pixel');work.width=Math.max(2,Math.round(w/pix));work.height=Math.max(2,Math.round(h/pix));
  const x=work.getContext('2d'),ww=work.width,hh=work.height;
