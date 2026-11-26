@@ -1,3 +1,4 @@
+import {butterControls,butterDefaults,butterAsset,loadButter,renderButter} from './butter-motion.js';
 import {renderFamilyText} from './family-text.js';
 import {applyGlassFX} from './glass-fx.js';
 import {renderCollage,loadCollagePhotos,getCollagePhotos,clearCollagePhotos} from './red-collage.js';
@@ -37,10 +38,12 @@ try{for(const [id,script] of Object.entries(JSON.parse(localStorage.getItem('vin
 const textByScene=Object.fromEntries(scenes.filter(s=>s.isText).map(s=>[s.id,'VINILE']));
 const redTitles=['EYE CONTACT','FACE MELT','KISS KISS','BON APPÉTIT','TOUCH ME','BODY LANGUAGE','BAD RECEPTION','MIRROR MIRROR','TOO CLOSE','THE END?'];
 for(const scene of scenes.filter(s=>s.family==='red'))scene.name='RED PASSION / '+String(scene.variant+1).padStart(2,'0')+' — '+redTitles[scene.variant];
-const defaultHighlights={sunset:P.red,night:P.red,body:P.red,type:P.red,liquid:P.red,optical:P.red,red:P.red};
+families.push(['butter','BURRO / IL FUORI ORARIO','Burnt film, butter warmth and editorial typography']);
+for(const [i,name] of ['BURNT FILM','BUTTER TYPE','AFTER MELT'].entries())scenes.push({id:'butter-00'+(i+1),family:'butter',name:'BURRO / '+name,variant:i,colors:['#160d08','#fff8e9']});
+const defaultHighlights={butter:P.orange,sunset:P.red,night:P.red,body:P.red,type:P.red,liquid:P.red,optical:P.red,red:P.red};
 const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
-const defaultParams={customText:'',bpm:120,hydraAmount:.5,hydraFrequency:8,hydraGlitch:.35,hydraBeat:.5,scale:1,speed:1,dither:0,blur:.08,distort:.55,frequency:1,multiply:1,copies:1,copiesY:1,pulse:0,drift:0,cameraDepth:0,rotationX:.15,rotationY:.25,perspective:48,geometryDensity:1,pixelSize:8,threshold:.5,smear:0,glitch:0,redZoom:1,sunsetGrain:.25,sunsetGlow:.42,sunsetBlur:.08,sunsetBlackLift:0,sunsetGradient:0,sunsetHalation:0,typeGrain:0,typeGlow:0,typeBlur:0,typeBlackLift:0,typeGradient:0,typeHalation:0,glassRefraction:0,glassBloom:0,glassSoftness:0,glassChromatic:0};
+const defaultParams={...butterDefaults,customText:'',bpm:120,hydraAmount:.5,hydraFrequency:8,hydraGlitch:.35,hydraBeat:.5,scale:1,speed:1,dither:0,blur:.08,distort:.55,frequency:1,multiply:1,copies:1,copiesY:1,pulse:0,drift:0,cameraDepth:0,rotationX:.15,rotationY:.25,perspective:48,geometryDensity:1,pixelSize:8,threshold:.5,smear:0,glitch:0,redZoom:1,sunsetGrain:.25,sunsetGlow:.42,sunsetBlur:.08,sunsetBlackLift:0,sunsetGradient:0,sunsetHalation:0,typeGrain:0,typeGlow:0,typeBlur:0,typeBlackLift:0,typeGradient:0,typeHalation:0,glassRefraction:0,glassBloom:0,glassSoftness:0,glassChromatic:0};
 const defaultResolution={w:2304,h:512};
 const app=document.querySelector('#app');let autoParams={},selected=scenes[0],playing=true,frame=0,last=0,params={...defaultParams},resolution={w:2304,h:512},duration=30,fps=30,quality=16,exporting=false;
 // Persistent output canvas: popup video stays alive when Studio rerenders its preview.
@@ -88,7 +91,7 @@ function animatedParams(p,phase,flags=autoParams){
  return out;
 }
 const ellipse=(c,x,y,rx,ry,color)=>{c.beginPath();c.ellipse(x,y,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);c.fillStyle=color;c.fill()};
-function renderBase(c,w,h,phase,s=selected,p=params){const palette={...P,highlight:highlights[s.family]};if(s.isText&&s.family==='night'){renderHydraDisco(c,w,h,phase,s,p,palette);return}if(s.isText){renderFamilyText(c,w,h,phase,s,p,palette);if(s.family==='sunset')finishSunset(c,w,h,p,phase);if(s.family==='type')finishSunset(c,w,h,{sunsetGrain:p.typeGrain,sunsetGlow:p.typeGlow,sunsetBlur:p.typeBlur,sunsetBlackLift:p.typeBlackLift,sunsetGradient:p.typeGradient,sunsetHalation:p.typeHalation},phase);if(s.family==='sunset'||s.family==='type'||s.family==='night')applyGlassFX(c,w,h,phase,p);return}const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
+function renderBase(c,w,h,phase,s=selected,p=params){if(s.family==='butter'){renderButter(c,w,h,phase,s,p);return;}const palette={...P,highlight:highlights[s.family]};if(s.isText&&s.family==='night'){renderHydraDisco(c,w,h,phase,s,p,palette);return}if(s.isText){renderFamilyText(c,w,h,phase,s,p,palette);if(s.family==='sunset')finishSunset(c,w,h,p,phase);if(s.family==='type')finishSunset(c,w,h,{sunsetGrain:p.typeGrain,sunsetGlow:p.typeGlow,sunsetBlur:p.typeBlur,sunsetBlackLift:p.typeBlackLift,sunsetGradient:p.typeGradient,sunsetHalation:p.typeHalation},phase);if(s.family==='sunset'||s.family==='type'||s.family==='night')applyGlassFX(c,w,h,phase,p);return}const [bg,fg]=s.colors;const t=phase*Math.PI*2*p.speed;const v=s.variant; c.fillStyle=bg;c.fillRect(0,0,w,h);const unit=h/512;const S=p.scale;
 if(s.family==='red'){if(s.variant===1)renderRedPhoto(c,w,h,phase,s,p,highlights.red);else if(s.variant===2)renderCollage(c,w,h,phase,s,p,highlights.red);else renderRed(c,w,h,phase,s,p,palette);}
 if(s.family==='sunset'){renderSunset(c,w,h,phase,s,p,palette);finishSunset(c,w,h,p,phase)}
 if(s.family==='optical')renderOptical(c,w,h,phase,s,p,palette);
@@ -162,6 +165,7 @@ if(['sunset','type'].includes(selected.family)){
 }
 // Compact controls: show only the parameters relevant to the selected visual family.
 const visibleByFamily={
+ butter:[],
  night:['customText','hydraAmount','hydraFrequency','hydraGlitch','hydraBeat','bpm','speed','bg','fg'],
  sunset:['customText','scale','speed','multiply','sunsetGrain','sunsetGlow','sunsetBlur','sunsetBlackLift','sunsetGradient','sunsetHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
  type:['customText','scale','speed','typeGrain','typeGlow','typeBlur','typeBlackLift','typeGradient','typeHalation','glassRefraction','glassBloom','glassSoftness','glassChromatic','bg','fg'],
@@ -187,6 +191,20 @@ if(['night','body'].includes(selected.family)){
   }
   settings.prepend(section);
  }
+}
+if(selected.family==='butter'){
+ const settings=document.querySelector('.settings');
+ for(const el of settings.children)el.hidden=true;
+ const section=document.createElement('div');section.className='hydra-study-controls';section.style.background='#302416';
+ const title=document.createElement('strong');title.textContent='BURRO / ANALOG MEDIA LAB';section.append(title);
+ const id=selected.id;
+ const upload=document.createElement('input');upload.type='file';upload.accept='video/mp4,image/gif,video/webm,image/*';
+ const status=document.createElement('small');status.textContent=butterAsset(id)?.name||'LOAD MP4 / GIF';
+ upload.onchange=async()=>{if(!upload.files[0])return;try{await loadButter(id,upload.files[0]);status.textContent=upload.files[0].name}catch(e){status.textContent=e.message}};
+ const media=document.createElement('label');media.textContent='MEDIA SOURCE';media.append(upload,status);section.append(media);
+ const textLabel=document.createElement('label');textLabel.textContent='EDITORIAL TITLE';const input=document.createElement('input');input.type='text';input.value=params.butter_title??(selected.variant===1?'Burro':'Il Fuori Orario');params.butter_title=input.value;input.oninput=()=>params.butter_title=input.value;textLabel.append(input);section.append(textLabel);
+ for(const [k,label,initial,min,max] of butterControls){const l=document.createElement('label'),o=document.createElement('output'),f=document.createElement('input');l.textContent=label;f.type='range';f.min=min;f.max=max;f.step=k==='pixel'?1:.01;const key='butter_'+k;f.value=params[key]??initial;o.textContent=f.value;f.oninput=()=>{params[key]=Number(f.value);o.textContent=f.value};l.append(o,f);section.append(l)}
+ settings.prepend(section);
 }
 const essential=new Set([...(visibleByFamily[selected.family]||['scale','speed','bg','fg']),...(selected.family==='night'?[]:['copies','copiesY','pulse','drift','dither'])]);
 document.querySelectorAll('.settings > .control').forEach(control=>{
