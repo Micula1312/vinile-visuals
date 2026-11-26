@@ -306,7 +306,27 @@ function updateTime(){
   if(output&&Number.isFinite(effective[key]))output.textContent=effective[key].toFixed(discreteParams.has(key)?0:2)+' ↻';
  }
  let o=document.querySelector('#time');if(o)o.textContent=(frame/fps).toFixed(2)+' / '+duration.toFixed(2);let s=document.querySelector('#scrub');if(s)s.value=frame}
-function tick(now){if(exporting){last=now;requestAnimationFrame(tick);return}if(!last)last=now;let delta=Math.min(now-last,100);last=now;if(playing){frame=(frame+delta*fps/1000)%(duration*fps);updateTime()}let preview=document.querySelector('#preview');if(preview){render(preview.getContext('2d'),preview.width,preview.height,frame/(duration*fps));if(projectorWindow&&!projectorWindow.closed){const pc=projectorCanvas.getContext('2d');pc.drawImage(preview,0,0,projectorCanvas.width,projectorCanvas.height)}}document.querySelectorAll('canvas[data-scene]').forEach((cv,i)=>render(cv.getContext('2d'),cv.width,cv.height,frame/(duration*fps),scenes.find(s=>s.family===cv.dataset.scene),{...defaultParams}));requestAnimationFrame(tick)}
+let lastPreview=0;
+function tick(now){
+ requestAnimationFrame(tick);
+ if(exporting){last=now;return}
+ const preview=document.querySelector('#preview');
+ const cards=preview?[]:document.querySelectorAll('canvas[data-scene]');
+ if(!preview&&!cards.length){last=now;return}
+ if(now-lastPreview<1000/(preview?30:12))return;
+ lastPreview=now;
+ const delta=last?Math.min(now-last,100):0;last=now;
+ if(playing){frame=(frame+delta*fps/1000)%(duration*fps);if(preview)updateTime()}
+ const phase=frame/(duration*fps);
+ if(preview){
+  render(preview.getContext('2d'),preview.width,preview.height,phase);
+  if(projectorWindow&&!projectorWindow.closed)projectorCanvas.getContext('2d').drawImage(preview,0,0,projectorCanvas.width,projectorCanvas.height);
+ }else for(const cv of cards){
+  const rect=cv.getBoundingClientRect();if(rect.bottom<0||rect.top>innerHeight)continue;
+  const scene=scenes.find(s=>s.family===cv.dataset.scene);if(scene)render(cv.getContext('2d'),cv.width,cv.height,phase,scene,{...defaultParams},{});
+ }
+}
+
 
 let archiveScope='',archiveCollection='',archiveCache=null;
 async function archiveRequest(payload){const response=await fetch('./api/aphis',payload?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}:undefined);const data=await response.json();if(!response.ok)throw Error(data.error||'Archive unavailable');archiveCache=data;return data}
