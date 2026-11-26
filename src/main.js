@@ -42,6 +42,9 @@ const redTitles=['EYE CONTACT','FACE MELT','KISS KISS','BON APPÉTIT','TOUCH ME'
 for(const scene of scenes.filter(s=>s.family==='red'))scene.name='RED PASSION / '+String(scene.variant+1).padStart(2,'0')+' — '+redTitles[scene.variant];
 families.push(['butter','BURRO / IL FUORI ORARIO','Burnt film, butter warmth and editorial typography']);
 for(const [i,name] of ['BURNT FILM','BUTTER TYPE','AFTER MELT'].entries())scenes.push({id:'butter-00'+(i+1),family:'butter',name:'BURRO / '+name,variant:i,colors:['#160d08','#fff8e9']});
+// Retired studies: preserve original variant indices for remaining algorithms.
+const retiredScenes=new Set(["night-001","night-002","night-005","night-008","body-002","body-005","body-009","body-010","type-003"]);
+for(let i=scenes.length-1;i>=0;i--)if(retiredScenes.has(scenes[i].id))scenes.splice(i,1);
 const defaultHighlights={butter:BURRO_PALETTE.cream,sunset:P.red,night:P.red,body:P.red,type:P.red,optical:P.red,red:P.red};
 const highlights={...defaultHighlights};
 const originalSceneColors=new Map(scenes.map(s=>[s.id,[...s.colors]]));
