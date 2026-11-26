@@ -152,7 +152,19 @@ window.addEventListener('error',e=>{
  if(status&&location.hash==='#studio')status.textContent='STUDIO ERROR: '+e.message;
 });
 function shell(){app.innerHTML=`<header><a class="brand" href="#">APHIS<span>_</span> <small>PARASITIC PROJECTION ENGINE</small></a><nav><a href="#projects" id="nav-project">PROJECTS</a><a href="#studio" id="nav-studio">STUDIO</a><a href="#mapping">MAPPING</a></nav><span class="meta">ROMA / 2026</span></header><main id="page"></main>`;window.addEventListener('hashchange',route);route()}
-function route(){closeMapping();const output=location.hash==='#output',mapping=location.hash==='#mapping';document.querySelector('header').style.display=output?'none':'';document.body.style.margin=output?'0':'';if(output||mapping){mappingPage(document.querySelector('#page'),scenes,(ctx,w,h,phase,id)=>{const s=scenes.find(x=>x.id===id);if(s)render(ctx,w,h,phase,s,{...defaultParams},{});},output);return}let studio=location.hash!=='#project';if(location.hash==='#projects'||location.hash==='#library'){studioPage();return}document.querySelector('#nav-project').classList.toggle('active',!studio);document.querySelector('#nav-studio').classList.toggle('active',studio);studio?studioPage():projectPage()}
+const liveKey='aphis-live-v1';
+let liveClips={};try{liveClips=JSON.parse(localStorage.getItem(liveKey)||'{}')}catch{}
+const liveBus=new BroadcastChannel(liveKey);
+liveBus.onmessage=e=>{if(e.data?.id&&e.data.patch)liveClips[e.data.id]=e.data.patch};
+let lastLiveSignature='',lastLiveWrite=0;
+function publishLive(now){
+ const patch={params:{...params},flags:{...autoParams},colors:[...selected.colors],highlight:highlights[selected.family],duration};
+ const signature=JSON.stringify([selected.id,patch]);if(signature===lastLiveSignature)return;
+ lastLiveSignature=signature;liveClips[selected.id]=patch;liveBus.postMessage({id:selected.id,patch});
+ if(now-lastLiveWrite>500){lastLiveWrite=now;try{localStorage.setItem(liveKey,JSON.stringify(liveClips))}catch{}}
+}
+window.addEventListener('pagehide',()=>{try{localStorage.setItem(liveKey,JSON.stringify(liveClips))}catch{}});
+function route(){closeMapping();const output=location.hash==='#output',mapping=location.hash==='#mapping';document.querySelector('header').style.display=output?'none':'';document.body.style.margin=output?'0':'';if(output||mapping){mappingPage(document.querySelector('#page'),scenes,(ctx,w,h,phase,id,linked=true)=>{const s=scenes.find(x=>x.id===id);if(!s)return;const patch=linked?liveClips[id]:null;const old=highlights[s.family];try{if(patch?.highlight)highlights[s.family]=patch.highlight;render(ctx,w,h,phase,patch?{...s,colors:patch.colors}:s,{...defaultParams,...patch?.params},patch?.flags||{});}finally{highlights[s.family]=old}},output);return}let studio=location.hash!=='#project';if(location.hash==='#projects'||location.hash==='#library'){studioPage();return}document.querySelector('#nav-project').classList.toggle('active',!studio);document.querySelector('#nav-studio').classList.toggle('active',studio);studio?studioPage():projectPage()}
 function projectPage(){document.querySelector('#page').innerHTML=`<section class="hero"><div class="eyebrow">01 / VISUAL IDENTITY — ART DIRECTION</div><h1>After <em>Hours.</em></h1><div class="herofoot">DANCE UNTIL LATE <span>ANALOG FEELING / DIGITAL BEHAVIOUR</span></div></section><section class="statement"><span class="eyebrow">THE CONCEPT</span><h2>VINILE.<br>A visual collection.</h2><p>Generative 30-second loops for dinner, soul live and disco. Flat colors, bitmap treatments, cinematic symbols and expressive editorial typography. A warm, graphic system that shifts from sunset to night, body, type and fluid abstraction.</p></section><section class="palette"><span class="eyebrow">THE PALETTE / THREE SHARED INKS + THREE ACCENTS</span><div class="swatches">${Object.entries(P).map(([k,v])=>`<div><div class="swatch" style="background:${v}"></div><small>${k.toUpperCase()}<br>${v}</small></div>`).join('')}</div></section><section><div class="eyebrow">VINILE / LIVE STUDIES</div><div class="worlds">${families.map(([id,name,desc],i)=>`<article class="world"><canvas data-scene="${id}" width="900" height="154"></canvas><div class="worldlabel"><strong>0${i+1} / ${name}</strong><span>${desc}</span></div></article>`).join('')}</div></section><section class="statement"><span class="eyebrow">THE METHOD</span><h2>Flat color. <em>Moving matter.</em></h2><p>All scenes are procedural and time-based. Each 30-second animation repeats continuously; a fixed seed and normalized timeline make every frame reproducible. Dither and halftone are adjustable, never a substitute for strong graphic composition.</p><a class="cta" href="#studio">OPEN THE STUDIO →</a></section>`}
 let colonyFilter='all',previewQuality=localStorage.getItem('aphis-preview')||'medium';
 const vinileFamilies=new Set(['night','body','red','butter']);
@@ -319,6 +331,7 @@ function tick(now){
  if(playing){frame=(frame+delta*fps/1000)%(duration*fps);if(preview)updateTime()}
  const phase=frame/(duration*fps);
  if(preview){
+  publishLive(now);
   render(preview.getContext('2d'),preview.width,preview.height,phase);
   if(projectorWindow&&!projectorWindow.closed)projectorCanvas.getContext('2d').drawImage(preview,0,0,projectorCanvas.width,projectorCanvas.height);
  }else for(const cv of cards){
