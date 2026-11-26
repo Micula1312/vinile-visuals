@@ -7,7 +7,7 @@ import {cenaStudies} from './hydra-cena.js';
 import {velvetLiveStudy} from './hydra-velvet-live.js';
 import {monoHydraStudy} from './hydra-mono-collage.js';
 const TAU=Math.PI*2;
-let hydra=null,canvas=null,key='',live={},textCanvas=null;
+let hydra=null,canvas=null,key='',live={},textCanvas=null,solarCanvas=null;
 const customPatches=new Map();
 const builtInPatches=new Map([...redHydraStudies,...cenaStudies,velvetLiveStudy,monoHydraStudy].map(study=>[study.id,study.code]));
 let patchError='';
@@ -39,22 +39,14 @@ function build(v){
  const amount=val('hydraAmount',.5),frequency=val('hydraFrequency',8),glitch=val('hydraGlitch',.35);
  const rhythm=()=>Math.max(0,beat())*Number(live.hydraBeat??.5);
  const prism=()=>.03+amount()*.3+rhythm()*.09;
- // 01 / SUNSET AFTER DARK — soft chromatic oscillations.
- if(v===0)color(osc(frequency,()=>.02*speed(),0).modulate(noise(2,.05),prism()),accent).blend(color(gradient(1),ink),.35).out(o0);
- // 02 / TRIANGLE FEVER — refracted three-sided geometry.
- else if(v===1)color(shape(3,()=>.23+rhythm()*.12,.008).repeat(3,2).modulateRotate(osc(3,.04),prism()),accent).add(color(osc(frequency,.02),ink),.2).out(o0);
  // 03 / GLITCH AFFAIR — aggressive pixel displacement and interference.
- else if(v===2)color(osc(frequency,()=>.02*speed(),.8).modulatePixelate(noise(3,.1),()=>16+glitch()*200,()=>4+glitch()*80).modulate(osc(15,.03),()=>glitch()*.12),accent).out(o0);
+ if(v===2)color(osc(frequency,()=>.02*speed(),.8).modulatePixelate(noise(3,.1),()=>16+glitch()*200,()=>4+glitch()*80).modulate(osc(15,.03),()=>glitch()*.12),accent).out(o0);
  // 04 / VELVET — low-frequency liquid modulation.
  else if(v===3)color(noise(2,()=>.06*speed()).modulate(noise(4,.04),prism()).contrast(1.5),accent).blend(color(osc(2,.02),ink),.4).out(o0);
- // 05 / CELESTE — interference and soft chromatic diffusion.
- else if(v===4)color(voronoi(5,()=>.06*speed(),.3).modulate(noise(3,.05),prism()).blend(osc(frequency,.02),.3),ink).add(color(osc(2,.01),accent),.25).out(o0);
  // 06 / MALITZIN — cellular interference.
  else if(v===5)color(voronoi(()=>3+frequency()*.5,.1,.3).modulate(osc(frequency,.03),prism()),accent).blend(color(noise(3,.05),ink),.25).out(o0);
  // 07 / EXAMPLE 09 — oscillator kaleidoscope.
  else if(v===6)color(osc(frequency,.02,.4).kaleid(5).modulateRotate(noise(2,.04),prism()),ink).add(color(osc(2,.03),accent),.25).out(o0);
- // 08 / RITCHSE — nested oscillation and modulation.
- else if(v===7)color(osc(frequency,.02,.5).modulateScale(osc(3,.03),prism()).kaleid(6),accent).blend(color(voronoi(3,.03),ink),.3).out(o0);
  // 09 / MARIANNE — fluid interference.
  else if(v===8)color(noise(3,.04).modulate(osc(frequency,.03),prism()).kaleid(4),ink).add(color(osc(2,.01),accent),.3).out(o0);
  // 10 / TEXT GLITCH — source canvas through Hydra pixel modulation.
@@ -72,7 +64,7 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
   const v=scene.isText?9:scene.variant;
   const next=[v,w,h,scene.id,scene.colors[0],scene.colors[1],palette.highlight].join('|');
   if(!textCanvas)textCanvas=document.createElement('canvas');
-  textCanvas.width=Math.max(2,Math.min(1536,w));textCanvas.height=Math.max(2,Math.round(h*textCanvas.width/w));
+  const tw=Math.max(2,Math.min(1536,w)),th=Math.max(2,Math.round(h*tw/w));if(textCanvas.width!==tw||textCanvas.height!==th){textCanvas.width=tw;textCanvas.height=th}
   const tc=textCanvas.getContext('2d');
   tc.clearRect(0,0,textCanvas.width,textCanvas.height);
   const word=(p.customText||'VINILE').slice(0,100);
@@ -98,7 +90,7 @@ export function renderHydraDisco(c,w,h,phase,scene,p,palette){
     // Square Hydra is only a texture source. Never display its square background.
     // Apply soft focus first, then a radial alpha mask, composited on pure black.
     const side=Math.max(2,Math.round(h*1.7));
-    const tmp=document.createElement('canvas');tmp.width=side;tmp.height=side;
+    const tmp=solarCanvas||(solarCanvas=document.createElement('canvas'));if(tmp.width!==side||tmp.height!==side){tmp.width=side;tmp.height=side}tmp.getContext('2d').clearRect(0,0,side,side);
     const tc=tmp.getContext('2d');
     tc.filter=blurPx>.01?`blur(${(blurPx*side/h).toFixed(2)}px)`:'none';
     tc.drawImage(canvas,0,0,side,side);
