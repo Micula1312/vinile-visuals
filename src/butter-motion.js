@@ -39,10 +39,10 @@ export function renderButter(c,w,h,phase,s,p){
  if(v('glitch')>0){for(let i=0;i<5;i++){const y=((i*.21+phase)%1)*h;c.drawImage(work,0,y/h*hh,ww,hh*.035,Math.sin(i+phase*6.28)*w*.04*v('glitch'),y,w,h*.035)}}
  c.globalCompositeOperation='screen';c.globalAlpha=v('glow')*.35;c.filter='blur('+h*.035+'px)';c.drawImage(work,0,0,w,h);c.filter='none';c.globalAlpha=1;c.globalCompositeOperation='source-over';
  }
- }else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#4e190b');g.addColorStop(.5,'#e4b85d');g.addColorStop(1,'#fff0c1');c.fillStyle=g;c.fillRect(0,0,w,h)}
+ }else{const g=c.createLinearGradient(0,0,w,h);g.addColorStop(0,'#7896ae');g.addColorStop(.5,'#e4cf88');g.addColorStop(1,'#fff0c1');c.fillStyle=g;c.fillRect(0,0,w,h)}
  c.fillStyle='rgba(255,215,145,'+v('fade')*.35+')';c.fillRect(0,0,w,h);
  c.globalCompositeOperation='soft-light';c.globalAlpha=v('grain')*.65;c.fillStyle=c.createPattern(grainCanvas,'repeat');c.fillRect(0,0,w,h);c.globalAlpha=1;c.globalCompositeOperation='source-over';
  const title=p.butter_title??(s.variant===0?'Il Fuori Orario':s.variant===1?'Burro':'Il Fuori Orario');
- if(title){c.fillStyle='#fff8e9';c.font='italic '+Math.round(h*v('titleSize'))+'px "Bodoni MT", Didot, "Times New Roman", serif';c.textAlign='center';c.textBaseline='middle';c.fillText(title,w/2,h/2,w*.94)}
+ if(title){c.fillStyle=p.butter_textColor||s.colors[1];c.font='italic '+Math.round(h*v('titleSize'))+'px "Bodoni MT", Didot, "Times New Roman", serif';c.textAlign='center';c.textBaseline='middle';c.fillText(title,w/2,h/2,w*.94)}
  c.restore();
 }
